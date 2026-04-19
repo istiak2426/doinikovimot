@@ -109,10 +109,7 @@ export default function Footer({ lang = 'bn' }) {
             <h4 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">{t.contactUs}</h4>
             <ul className="space-y-2 text-gray-400 text-sm">
 
-              <li className="flex items-center gap-2">
-                <Phone size={14} />
-                <span>+8801748008483</span>
-              </li>
+              
 
 
 
