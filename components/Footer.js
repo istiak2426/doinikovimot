@@ -116,7 +116,7 @@ export default function Footer({ lang = 'bn' }) {
 
               <li className="flex items-center gap-2">
                 <Mail size={14} />
-                <span>doinikovimot@gmail.com</span>
+                <span>doinikobhimot@gmail.com</span>
               </li>
 
               <li className="flex items-center gap-2">
