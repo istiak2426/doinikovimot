@@ -1,0 +1,213 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap');
+
+@layer base {
+  .font-bangla {
+    font-family: 'Noto Sans Bengali', sans-serif;
+  }
+  
+  /* Mobile-first base styles */
+  html {
+    font-size: 14px;
+  }
+  
+  @media (min-width: 640px) {
+    html {
+      font-size: 16px;
+    }
+  }
+}
+
+@layer components {
+  .container-custom {
+    @apply w-full px-4 mx-auto;
+  }
+  
+  @media (min-width: 640px) {
+    .container-custom {
+      @apply max-w-screen-sm px-6;
+    }
+  }
+  
+  @media (min-width: 768px) {
+    .container-custom {
+      @apply max-w-screen-md px-6;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .container-custom {
+      @apply max-w-screen-lg px-8;
+    }
+  }
+  
+  @media (min-width: 1280px) {
+    .container-custom {
+      @apply max-w-screen-xl px-8;
+    }
+  }
+  
+  .btn-primary {
+    @apply bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-300 text-sm md:text-base;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition duration-300 text-sm md:text-base;
+  }
+  
+  /* Mobile card styles */
+  .article-card {
+    @apply bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition;
+  }
+  
+  /* Responsive text utilities */
+  .heading-1 {
+    @apply text-2xl md:text-3xl lg:text-4xl font-bold;
+  }
+  
+  .heading-2 {
+    @apply text-xl md:text-2xl lg:text-3xl font-bold;
+  }
+  
+  .heading-3 {
+    @apply text-lg md:text-xl lg:text-2xl font-semibold;
+  }
+  
+  /* Line clamp utilities */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* Touch-friendly tap targets */
+  .tap-target {
+    @apply min-h-[44px] min-w-[44px] inline-flex items-center justify-center;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Loading animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideDown {
+  animation: slideDown 0.2s ease-out;
+}
+
+/* Mobile menu improvements */
+@media (max-width: 768px) {
+  .mobile-menu-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  }
+}
+
+/* Better touch scrolling */
+.overflow-auto-touch {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Responsive image handling */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Responsive typography for Bangla */
+.font-bangla {
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .font-bangla {
+    line-height: 1.5;
+  }
+}
+
+/* Gradient text for hero section */
+.text-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Responsive table */
+.responsive-table {
+  @apply w-full overflow-x-auto;
+}
+
+.responsive-table table {
+  @apply min-w-[600px];
+}
+
+/* Bottom navigation for mobile (optional) */
+@media (max-width: 768px) {
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50;
+  }
+}
+
+
+
+/* Bengali font support */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap');
+
+.font-bangla {
+  font-family: 'Noto Sans Bengali', 'Segoe UI', 'Arial', sans-serif;
+}
+
+/* For the logo specifically */
+.logo-text {
+  font-family: 'Noto Sans Bengali', 'Arial', sans-serif;
+  font-weight: 700;
+}
