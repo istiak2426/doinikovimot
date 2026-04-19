@@ -114,6 +114,19 @@ export default function Footer({ lang = 'bn' }) {
                 <span>+8801748008483</span>
               </li>
 
+
+
+
+<li className="flex items-center gap-2">
+                <Phone size={14} />
+                <span>+8801683522917</span>
+              </li>
+
+<li className="flex items-center gap-2">
+                <Phone size={14} />
+                <span>+8801748008483</span>
+              </li>
+
               <li className="flex items-center gap-2">
                 <Mail size={14} />
                 <span>doinikobhimot@gmail.com</span>
