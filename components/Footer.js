@@ -109,17 +109,12 @@ export default function Footer({ lang = 'bn' }) {
             <h4 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">{t.contactUs}</h4>
             <ul className="space-y-2 text-gray-400 text-sm">
 
-              
-
-
-
-
-<li className="flex items-center gap-2">
+              <li className="flex items-center gap-2">
                 <Phone size={14} />
                 <span>+8801683522917</span>
               </li>
 
-<li className="flex items-center gap-2">
+              <li className="flex items-center gap-2">
                 <Phone size={14} />
                 <span>+8801748008483</span>
               </li>
@@ -182,9 +177,8 @@ export default function Footer({ lang = 'bn' }) {
         </div>
 
         <div className="border-t border-gray-800 mt-6 md:mt-8 pt-6 md:pt-8 text-center text-gray-400 text-xs md:text-sm">
-<p>{lang === bn? 'সম্পাদক ও প্রকাশক: আরিফ মারজান  : 'Editor & Publisher: Arif Marjan}</p>
-
-<p>{lang === bn? 'স্বত্ব © ২০২৬ দৈনিক অভিমত': 'Copyright © 2026 Doinik Obhimot'}<\p>
+          <p>{lang === 'bn' ? 'সম্পাদক ও প্রকাশক: আরিফ মারজান' : 'Editor & Publisher: Arif Marjan'}</p>
+          <p>{lang === 'bn' ? 'স্বত্ব © ২০২৬ দৈনিক অভিমত' : 'Copyright © 2026 Doinik Obhimot'}</p>
         </div>
       </div>
     </footer>
