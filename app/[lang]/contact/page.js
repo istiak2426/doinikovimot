@@ -30,7 +30,7 @@ export default function Contact() {
       </div>
 
       <form
-        action="https://formsubmit.co/doinikovimot@gmail.com"
+        action="https://formsubmit.co/doinikobhimot@gmail.com"
         method="POST"
         className="space-y-4 bg-white p-6 rounded-lg shadow-md border"
       >
