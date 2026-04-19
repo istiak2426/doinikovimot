@@ -184,7 +184,7 @@ export default function Footer({ lang = 'bn' }) {
         <div className="border-t border-gray-800 mt-6 md:mt-8 pt-6 md:pt-8 text-center text-gray-400 text-xs md:text-sm">
 <p>{lang === bn? 'সম্পাদক ও প্রকাশক: আরিফ মারজান  : 'Editor & Publisher: Arif Marjan}</p>
 
-          <p>&copy; 2026 Doinik Obhimot. {t.copyright}</p>
+          <p>{lang === bn?'স্বত্ব © ২০২৬ দৈনিক অভিমত': 'Copyright © 2026 Doinik Obhimot'} <\p>
         </div>
       </div>
     </footer>
