@@ -35,12 +35,26 @@ export default function ArticlePage() {
       setLoading(true)
       const supabase = createClient()
       
-      const { data, error } = await supabase
+      // Try fetching by id first
+      let { data, error } = await supabase
         .from('articles')
         .select('*')
         .eq('id', id)
-        .eq('status', 'published')
         .single()
+      
+      // If not found by id, try by slug
+      if (error || !data) {
+        const { data: slugData, error: slugError } = await supabase
+          .from('articles')
+          .select('*')
+          .eq('slug', id)
+          .single()
+        
+        if (!slugError && slugData) {
+          data = slugData
+          error = null
+        }
+      }
       
       if (error) throw error
       if (!data) throw new Error('Article not found')
@@ -51,9 +65,10 @@ export default function ArticlePage() {
       await supabase
         .from('articles')
         .update({ views: (data.views || 0) + 1 })
-        .eq('id', id)
+        .eq('id', data.id)
       
     } catch (err) {
+      console.error('Error:', err)
       setError(err.message)
     } finally {
       setLoading(false)
@@ -71,7 +86,8 @@ export default function ArticlePage() {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <h1 className="text-2xl font-bold text-red-600 mb-4">Article not found</h1>
-        <Link href={`/${lang}`} className="bg-red-600 text-white px-6 py-2 rounded-lg">
+        <p className="text-gray-600 mb-4">ID: {id}</p>
+        <Link href={`/${lang}`} className="bg-red-600 text-white px-6 py-2 rounded-lg inline-block">
           {isBn ? 'হোমে ফিরুন' : 'Back Home'}
         </Link>
       </div>
