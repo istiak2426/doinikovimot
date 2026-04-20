@@ -3,7 +3,7 @@
 import { useState, useEffect, memo, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Calendar, Eye, TrendingUp, Clock } from 'lucide-react'
+import { Calendar, Eye, TrendingUp, Clock, RefreshCw } from 'lucide-react'
 import { format } from 'date-fns'
 import { bn } from 'date-fns/locale'
 import { supabase } from '@/lib/supabase'
@@ -13,13 +13,11 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 // 🔧 AdSense readiness – set to true when you want to enable ads
 // --------------------------------------------------------------
 const ADSENSE_READY = false  // 👈 Change to true when ready
-// When ready, also set your AdSense client ID and ad slots below
-const ADSENSE_CLIENT = 'ca-pub-XXXXXXXXXXXXXXXX' // replace with your ID
-const AD_SLOT_HERO = '1234567890'                // replace with your slot
+const ADSENSE_CLIENT = 'ca-pub-XXXXXXXXXXXXXXXX'
+const AD_SLOT_HERO = '1234567890'
 const AD_SLOT_INFEED = '1234567891'
 const AD_SLOT_FOOTER = '1234567892'
 
-// Load AdSense script only when ready
 if (typeof window !== 'undefined' && ADSENSE_READY && !document.querySelector('script[src*="adsbygoogle.js"]')) {
   const script = document.createElement('script')
   script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js'
@@ -29,7 +27,6 @@ if (typeof window !== 'undefined' && ADSENSE_READY && !document.querySelector('s
   document.head.appendChild(script)
 }
 
-// Ad component – renders nothing unless ADSENSE_READY is true
 const AdSlot = ({ slot, format = 'auto', style = {} }) => {
   if (!ADSENSE_READY) return null
   return (
@@ -97,9 +94,6 @@ const ArticleCard = memo(({ article, lang, formatDate, getLocalizedTitle, getLoc
 })
 ArticleCard.displayName = 'ArticleCard'
 
-// --------------------------------------------------------------
-// Skeleton Loader
-// --------------------------------------------------------------
 const SkeletonCard = () => (
   <div className="animate-pulse">
     <div className="bg-gray-200 h-48 md:h-56 rounded-t-lg"></div>
@@ -123,34 +117,43 @@ export default function Home({ params: { lang } }) {
   const [latestArticles, setLatestArticles] = useState([])
   const [trendingArticles, setTrendingArticles] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  // Fetch articles with simple cache (5 minutes)
-  useEffect(() => {
+  // Fetch articles with optional cache bypass
+  const fetchArticles = useCallback(async (bypassCache = false) => {
+    setLoading(true)
+    setError(null)
+
     const cacheKey = `home_articles_${lang}`
-    const cached = sessionStorage.getItem(cacheKey)
-    const cacheTime = sessionStorage.getItem(`${cacheKey}_time`)
-    const now = Date.now()
-
-    if (cached && cacheTime && now - parseInt(cacheTime) < 5 * 60 * 1000) {
-      const data = JSON.parse(cached)
-      setFeaturedArticles(data.featured)
-      setLatestArticles(data.latest)
-      setTrendingArticles(data.trending)
-      setLoading(false)
-      return
+    
+    // Check cache only if not bypassing
+    if (!bypassCache) {
+      const cached = sessionStorage.getItem(cacheKey)
+      const cacheTime = sessionStorage.getItem(`${cacheKey}_time`)
+      if (cached && cacheTime && Date.now() - parseInt(cacheTime) < 5 * 60 * 1000) {
+        try {
+          const data = JSON.parse(cached)
+          setFeaturedArticles(data.featured)
+          setLatestArticles(data.latest)
+          setTrendingArticles(data.trending)
+          setLoading(false)
+          return
+        } catch (e) {
+          console.warn('Cache parse error', e)
+        }
+      }
     }
 
-    fetchArticles()
-  }, [lang])
-
-  async function fetchArticles() {
-    setLoading(true)
     try {
       const [featuredRes, latestRes, trendingRes] = await Promise.all([
         supabase.from('articles').select('*').eq('status', 'published').eq('is_featured', true).order('views', { ascending: false }).limit(3),
         supabase.from('articles').select('*').eq('status', 'published').order('published_at', { ascending: false }).limit(6),
         supabase.from('articles').select('*').eq('status', 'published').order('views', { ascending: false }).limit(5)
       ])
+
+      if (featuredRes.error) throw featuredRes.error
+      if (latestRes.error) throw latestRes.error
+      if (trendingRes.error) throw trendingRes.error
 
       const featured = featuredRes.data || []
       const latest = latestRes.data || []
@@ -160,15 +163,20 @@ export default function Home({ params: { lang } }) {
       setLatestArticles(latest)
       setTrendingArticles(trending)
 
-      // Cache results
-      sessionStorage.setItem(`home_articles_${lang}`, JSON.stringify({ featured, latest, trending }))
-      sessionStorage.setItem(`home_articles_${lang}_time`, Date.now().toString())
+      // Cache the fresh data
+      sessionStorage.setItem(cacheKey, JSON.stringify({ featured, latest, trending }))
+      sessionStorage.setItem(`${cacheKey}_time`, Date.now().toString())
     } catch (err) {
       console.error('Fetch error:', err)
+      setError(err.message || 'Failed to load articles')
     } finally {
       setLoading(false)
     }
-  }
+  }, [lang])
+
+  useEffect(() => {
+    fetchArticles()
+  }, [fetchArticles])
 
   const formatDate = useCallback((date) => {
     if (!date) return ''
@@ -191,9 +199,9 @@ export default function Home({ params: { lang } }) {
     return article.excerpt
   }, [lang])
 
-  // Structured data (JSON-LD) – always good for SEO
+  // Structured data (JSON-LD)
   useEffect(() => {
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined' || latestArticles.length === 0) return
     const script = document.createElement('script')
     script.type = 'application/ld+json'
     script.textContent = JSON.stringify({
@@ -201,7 +209,7 @@ export default function Home({ params: { lang } }) {
       "@type": "CollectionPage",
       "name": lang === 'bn' ? "দৈনিক অভিমত - হোম" : "Doinik Ovimot - Home",
       "description": lang === 'bn' ? "সর্বশেষ সংবাদ, বিশ্লেষণ এবং ট্রেন্ডিং খবর" : "Latest news, analysis and trending stories",
-      "url": typeof window !== 'undefined' ? window.location.href : '',
+      "url": window.location.href,
       "mainEntity": {
         "@type": "ItemList",
         "itemListElement": latestArticles.slice(0, 5).map((article, idx) => ({
@@ -279,20 +287,41 @@ export default function Home({ params: { lang } }) {
         </div>
       </section>
 
-      {/* 👇 Ad slot below hero (disabled until ADSENSE_READY = true) */}
       <AdSlot slot={AD_SLOT_HERO} style={{ minHeight: '90px' }} />
 
-      {/* Latest News Section */}
+      {/* Latest News Section with Refresh Button */}
       <section className="container-custom py-8 md:py-12">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 md:mb-8">
           <h2 className="heading-2 border-l-4 border-red-600 pl-3 md:pl-4">
             {lang === 'bn' ? 'সর্বশেষ সংবাদ' : 'Latest News'}
           </h2>
-          <div className="flex items-center gap-2 text-sm text-gray-500 mt-2 md:mt-0">
-            <Clock size={14} />
-            <span>{lang === 'bn' ? 'সর্বশেষ আপডেট' : 'Latest updates'}</span>
+          <div className="flex items-center gap-4 mt-2 md:mt-0">
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <Clock size={14} />
+              <span>{lang === 'bn' ? 'সর্বশেষ আপডেট' : 'Latest updates'}</span>
+            </div>
+            <button
+              onClick={() => fetchArticles(true)}
+              className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 transition"
+              title="Refresh articles"
+            >
+              <RefreshCw size={14} />
+              <span>{lang === 'bn' ? 'রিফ্রেশ' : 'Refresh'}</span>
+            </button>
           </div>
         </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+            <strong>Error:</strong> {error}
+            <button
+              onClick={() => fetchArticles(true)}
+              className="ml-4 underline hover:no-underline"
+            >
+              Try again
+            </button>
+          </div>
+        )}
 
         {latestArticles.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
@@ -305,7 +334,6 @@ export default function Home({ params: { lang } }) {
                   getLocalizedTitle={getLocalizedTitle}
                   getLocalizedExcerpt={getLocalizedExcerpt}
                 />
-                {/* 👇 In-feed ad after 3rd article (desktop) and 2nd (mobile) – ready for when you enable */}
                 {idx === 2 && (
                   <div className="hidden sm:block my-6">
                     <AdSlot slot={AD_SLOT_INFEED} format="rectangle" style={{ minHeight: '250px' }} />
@@ -362,7 +390,6 @@ export default function Home({ params: { lang } }) {
         </section>
       )}
 
-      {/* 👇 Footer ad slot (disabled until ready) */}
       <AdSlot slot={AD_SLOT_FOOTER} format="horizontal" style={{ minHeight: '90px' }} />
     </div>
   )
