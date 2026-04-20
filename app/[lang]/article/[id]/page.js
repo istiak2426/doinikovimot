@@ -23,7 +23,7 @@ export default function DynamicArticlePage() {
   const [likesCount, setLikesCount] = useState(0)
 
   const [pageUrl, setPageUrl] = useState('')
-  const [toast, setToast] = useState('')
+  const [shareOpen, setShareOpen] = useState(false)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -39,11 +39,6 @@ export default function DynamicArticlePage() {
   useEffect(() => {
     if (id) fetchArticle()
   }, [id])
-
-  function showToast(message) {
-    setToast(message)
-    setTimeout(() => setToast(''), 2000)
-  }
 
   async function fetchArticle() {
     try {
@@ -88,12 +83,12 @@ export default function DynamicArticlePage() {
       .eq('id', article.id)
   }
 
-  function handleShareNative() {
+  function handleNativeShare() {
     if (!article) return
 
-    const shareUrl = window.location.href
     const title =
-      (lang === 'bn' && article?.title_bn) || article?.title || 'Doinik Obhimot'
+      (lang === 'bn' && article?.title_bn) || article?.title || 'Article'
+
     const text =
       (lang === 'bn' && article?.excerpt_bn) || article?.excerpt || ''
 
@@ -101,11 +96,7 @@ export default function DynamicArticlePage() {
       navigator.share({
         title,
         text,
-        url: shareUrl,
-      }).catch(err => {
-        if (err.name !== 'AbortError') {
-          console.log(err)
-        }
+        url: window.location.href,
       })
     }
   }
@@ -135,7 +126,7 @@ export default function DynamicArticlePage() {
         <h1 className="text-2xl font-bold text-red-600 mb-4">
           {isBn ? 'আর্টিকেলটি পাওয়া যায়নি' : 'Article Not Found'}
         </h1>
-        <Link href={`/${lang}`} className="bg-red-600 text-white px-6 py-2 rounded-lg inline-block">
+        <Link href={`/${lang}`} className="bg-red-600 text-white px-6 py-2 rounded-lg">
           {isBn ? 'হোমে ফিরুন' : 'Back Home'}
         </Link>
       </div>
@@ -151,51 +142,61 @@ export default function DynamicArticlePage() {
 
       <div className="container mx-auto px-4 py-8">
 
+        {/* Back */}
         <Link href={`/${lang}`} className="inline-flex items-center gap-2 text-gray-600 mb-6">
-          <ArrowLeft size={20} /> {isBn ? 'হোমে ফিরুন' : 'Back'}
+          <ArrowLeft size={18} />
+          {isBn ? 'হোমে ফিরুন' : 'Back'}
         </Link>
 
         <article className="max-w-4xl mx-auto">
 
+          {/* Title */}
           <h1 className="text-3xl md:text-5xl font-bold mb-4">
             {title}
           </h1>
 
+          {/* Meta */}
           <div className="flex gap-4 text-gray-600 border-t border-b py-4 mb-6">
             <span className="flex items-center gap-1">
               <User size={16} /> {article.author}
             </span>
+
             <span className="flex items-center gap-1">
               <Calendar size={16} />
               {format(new Date(article.published_at), 'PPP', {
                 locale: isBn ? bn : undefined,
               })}
             </span>
+
             <span className="flex items-center gap-1">
               <Eye size={16} />
               {article.views || 0}
             </span>
           </div>
 
+          {/* Image */}
           {article.featured_image && (
             <img
               src={article.featured_image}
               className="w-full rounded-lg mb-6"
+              alt={title}
             />
           )}
 
+          {/* Excerpt */}
           {excerpt && (
             <p className="text-xl italic border-l-4 border-red-500 pl-4 mb-6">
               {excerpt}
             </p>
           )}
 
+          {/* Content */}
           <div dangerouslySetInnerHTML={{ __html: content }} />
 
-          {/* ACTIONS */}
-          <div className="flex flex-wrap gap-2 items-center border-t pt-6 mt-8">
+          {/* ACTION BAR */}
+          <div className="flex items-center justify-between border-t pt-6 mt-8">
 
-            {/* LIKE */}
+            {/* Like */}
             <button
               onClick={handleLike}
               disabled={liked}
@@ -205,62 +206,85 @@ export default function DynamicArticlePage() {
                   : 'bg-gray-100 hover:bg-gray-200'
               }`}
             >
-              <Heart size={20} className={liked ? 'fill-red-600' : ''} />
+              <Heart size={18} className={liked ? 'fill-red-600' : ''} />
               {likesCount}
             </button>
 
-            {/* Native Share */}
+            {/* Share (Prothom Alo style) */}
             <button
-              onClick={handleShareNative}
-              className="px-3 py-2 bg-gray-800 text-white rounded-lg"
+              onClick={() => setShareOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
             >
-              <Share2 size={18} /> Share
+              <Share2 size={18} />
+              Share
             </button>
 
-            {/* Facebook */}
-            <a
-              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`}
-              target="_blank"
-              className="px-3 py-2 bg-blue-600 text-white rounded-lg"
-            >
-              Facebook
-            </a>
-
-            {/* WhatsApp */}
-            <a
-              href={`https://wa.me/?text=${encodeURIComponent(title + ' ' + pageUrl)}`}
-              target="_blank"
-              className="px-3 py-2 bg-green-600 text-white rounded-lg"
-            >
-              WhatsApp
-            </a>
-
-            {/* Twitter */}
-            <a
-              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(pageUrl)}`}
-              target="_blank"
-              className="px-3 py-2 bg-black text-white rounded-lg"
-            >
-              Twitter
-            </a>
-
-            {/* COPY */}
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(pageUrl)
-                showToast(isBn ? 'লিংক কপি হয়েছে!' : 'Link copied!')
-              }}
-              className="px-3 py-2 bg-red-600 text-white rounded-lg"
-            >
-              Copy
-            </button>
           </div>
         </article>
 
-        {/* TOAST */}
-        {toast && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-lg">
-            {toast}
+        {/* ================= SHARE BOTTOM SHEET ================= */}
+        {shareOpen && (
+          <div className="fixed inset-0 bg-black/40 flex items-end z-50">
+
+            <div className="w-full bg-white rounded-t-2xl p-4 animate-slideUp">
+
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">
+                  {isBn ? 'শেয়ার করুন' : 'Share'}
+                </h3>
+
+                <button onClick={() => setShareOpen(false)}>
+                  ✕
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+
+                {/* Native */}
+                <button
+                  onClick={() => {
+                    setShareOpen(false)
+                    handleNativeShare()
+                  }}
+                  className="p-3 bg-gray-100 rounded-lg"
+                >
+                  📲 Share
+                </button>
+
+                {/* Copy */}
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href)
+                    setShareOpen(false)
+                  }}
+                  className="p-3 bg-gray-100 rounded-lg"
+                >
+                  🔗 Copy
+                </button>
+
+                {/* Facebook */}
+                <a
+                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
+                  target="_blank"
+                  onClick={() => setShareOpen(false)}
+                  className="p-3 bg-blue-100 rounded-lg text-center"
+                >
+                  Facebook
+                </a>
+
+                {/* WhatsApp */}
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(title + ' ' + window.location.href)}`}
+                  target="_blank"
+                  onClick={() => setShareOpen(false)}
+                  className="p-3 bg-green-100 rounded-lg text-center"
+                >
+                  WhatsApp
+                </a>
+
+              </div>
+
+            </div>
           </div>
         )}
 
