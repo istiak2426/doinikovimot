@@ -8,7 +8,6 @@ import { format } from 'date-fns'
 import { bn } from 'date-fns/locale'
 import { supabase } from '@/lib/supabase'
 import LoadingSpinner from '@/components/LoadingSpinner'
-import Header from '@/components/Header'  // Import the Header component
 
 // --------------------------------------------------------------
 // AdSense (safe initialization)
@@ -309,109 +308,106 @@ export default function Home({ params: { lang } }) {
   const subHeroArticles = featuredArticles.slice(1, 3)
 
   return (
-    <>
-      <Header propLang={lang} />
-      <div className="bg-gray-50 font-serif">
-        {/* Hero Section */}
-        {heroArticle && (
-          <div className="container mx-auto px-4 py-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-2">
+    <div className="bg-gray-50 font-serif">
+      {/* Hero Section */}
+      {heroArticle && (
+        <div className="container mx-auto px-4 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2">
+              <MainArticleCard
+                article={heroArticle}
+                lang={lang}
+                getLocalizedTitle={getLocalizedTitle}
+                getLocalizedExcerpt={getLocalizedExcerpt}
+                formatDate={formatDate}
+                size="large"
+                priority={true}
+              />
+            </div>
+            <div className="space-y-6">
+              {subHeroArticles.map(article => (
                 <MainArticleCard
-                  article={heroArticle}
+                  key={article.id}
+                  article={article}
                   lang={lang}
                   getLocalizedTitle={getLocalizedTitle}
                   getLocalizedExcerpt={getLocalizedExcerpt}
                   formatDate={formatDate}
-                  size="large"
-                  priority={true}
+                  size="small"
                 />
-              </div>
-              <div className="space-y-6">
-                {subHeroArticles.map(article => (
-                  <MainArticleCard
-                    key={article.id}
-                    article={article}
-                    lang={lang}
-                    getLocalizedTitle={getLocalizedTitle}
-                    getLocalizedExcerpt={getLocalizedExcerpt}
-                    formatDate={formatDate}
-                    size="small"
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <AdSlot slot={AD_SLOT_HERO} style={{ minHeight: '90px' }} />
-
-        {/* Latest News + Trending */}
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <SectionHeader title={lang === 'bn' ? 'সর্বশেষ খবর' : 'Latest News'} seeAllLink={`/${lang}/category/all`} lang={lang} />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {latestArticles.slice(0, 6).map(article => (
-                  <MainArticleCard
-                    key={article.id}
-                    article={article}
-                    lang={lang}
-                    getLocalizedTitle={getLocalizedTitle}
-                    getLocalizedExcerpt={getLocalizedExcerpt}
-                    formatDate={formatDate}
-                    size="small"
-                  />
-                ))}
-              </div>
-              <div className="my-8">
-                <AdSlot slot={AD_SLOT_INFEED} format="rectangle" style={{ minHeight: '250px' }} />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {latestArticles.slice(6, 8).map(article => (
-                  <MainArticleCard key={article.id} article={article} lang={lang} getLocalizedTitle={getLocalizedTitle} getLocalizedExcerpt={getLocalizedExcerpt} formatDate={formatDate} size="small" />
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <SectionHeader title={lang === 'bn' ? 'সর্বাধিক পঠিত' : 'Most Read'} lang={lang} />
-              <div className="space-y-1">
-                {trendingArticles.map((article, idx) => (
-                  <div key={article.id} className="flex items-start gap-3 p-2 border-b border-gray-100">
-                    <div className="text-2xl font-bold text-red-500 w-10">{idx + 1}</div>
-                    <div className="flex-1">
-                      <Link href={`/${lang}/article/${article.id}`}>
-                        <h3 className={`font-semibold text-sm hover:text-red-600 transition line-clamp-2 ${lang === 'bn' ? 'font-bangla' : ''}`}>
-                          {getLocalizedTitle(article)}
-                        </h3>
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
         </div>
+      )}
 
-        {/* Category Sections */}
-        {['Politics', 'Business', 'Sports', 'Entertainment', 'International'].map(cat => {
-          const articles = categoryArticles[cat]
-          if (!articles || articles.length === 0) return null
-          return (
-            <div key={cat} className="container mx-auto px-4 py-6 border-t border-gray-200">
-              <SectionHeader title={getLocalizedCategoryName(cat)} seeAllLink={`/${lang}/category/${cat.toLowerCase()}`} lang={lang} />
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
-                {articles.slice(0, 4).map(article => (
-                  <CompactArticleCard key={article.id} article={article} lang={lang} getLocalizedTitle={getLocalizedTitle} />
-                ))}
-              </div>
+      <AdSlot slot={AD_SLOT_HERO} style={{ minHeight: '90px' }} />
+
+      {/* Latest News + Trending */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <SectionHeader title={lang === 'bn' ? 'সর্বশেষ খবর' : 'Latest News'} seeAllLink={`/${lang}/category/all`} lang={lang} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {latestArticles.slice(0, 6).map(article => (
+                <MainArticleCard
+                  key={article.id}
+                  article={article}
+                  lang={lang}
+                  getLocalizedTitle={getLocalizedTitle}
+                  getLocalizedExcerpt={getLocalizedExcerpt}
+                  formatDate={formatDate}
+                  size="small"
+                />
+              ))}
             </div>
-          )
-        })}
+            <div className="my-8">
+              <AdSlot slot={AD_SLOT_INFEED} format="rectangle" style={{ minHeight: '250px' }} />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {latestArticles.slice(6, 8).map(article => (
+                <MainArticleCard key={article.id} article={article} lang={lang} getLocalizedTitle={getLocalizedTitle} getLocalizedExcerpt={getLocalizedExcerpt} formatDate={formatDate} size="small" />
+              ))}
+            </div>
+          </div>
 
-        <AdSlot slot={AD_SLOT_FOOTER} format="horizontal" style={{ minHeight: '90px' }} />
+          <div>
+            <SectionHeader title={lang === 'bn' ? 'সর্বাধিক পঠিত' : 'Most Read'} lang={lang} />
+            <div className="space-y-1">
+              {trendingArticles.map((article, idx) => (
+                <div key={article.id} className="flex items-start gap-3 p-2 border-b border-gray-100">
+                  <div className="text-2xl font-bold text-red-500 w-10">{idx + 1}</div>
+                  <div className="flex-1">
+                    <Link href={`/${lang}/article/${article.id}`}>
+                      <h3 className={`font-semibold text-sm hover:text-red-600 transition line-clamp-2 ${lang === 'bn' ? 'font-bangla' : ''}`}>
+                        {getLocalizedTitle(article)}
+                      </h3>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
-    </>
+
+      {/* Category Sections */}
+      {['Politics', 'Business', 'Sports', 'Entertainment', 'International'].map(cat => {
+        const articles = categoryArticles[cat]
+        if (!articles || articles.length === 0) return null
+        return (
+          <div key={cat} className="container mx-auto px-4 py-6 border-t border-gray-200">
+            <SectionHeader title={getLocalizedCategoryName(cat)} seeAllLink={`/${lang}/category/${cat.toLowerCase()}`} lang={lang} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+              {articles.slice(0, 4).map(article => (
+                <CompactArticleCard key={article.id} article={article} lang={lang} getLocalizedTitle={getLocalizedTitle} />
+              ))}
+            </div>
+          </div>
+        )
+      })}
+
+      <AdSlot slot={AD_SLOT_FOOTER} format="horizontal" style={{ minHeight: '90px' }} />
+    </div>
   )
 }
