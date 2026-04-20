@@ -67,12 +67,12 @@ const CompactArticleCard = memo(({ article, lang, getLocalizedTitle }) => {
     <Link href={`/${lang}/article/${article.id}`}>
       <div className="flex gap-3 border-b border-gray-100 py-3 hover:bg-gray-50 transition cursor-pointer">
         {article.featured_image && (
-          <div className="relative w-20 h-20 flex-shrink-0">
+          <div className="relative w-20 h-20 flex-shrink-0 bg-gray-100">
             <Image
               src={article.featured_image}
               alt={getLocalizedTitle(article)}
               fill
-              className="object-cover rounded"
+              className="object-contain rounded"
             />
           </div>
         )}
@@ -101,12 +101,12 @@ const MainArticleCard = memo(({ article, lang, getLocalizedTitle, getLocalizedEx
     <Link href={`/${lang}/article/${article.id}`}>
       <div className="group cursor-pointer">
         {article.featured_image && (
-          <div className={`relative overflow-hidden rounded-md ${size === 'large' ? 'h-64 md:h-80' : 'h-48'}`}>
+          <div className={`relative overflow-hidden rounded-md bg-gray-100 ${size === 'large' ? 'h-64 md:h-80' : 'h-48'}`}>
             <Image
               src={article.featured_image}
               alt={getLocalizedTitle(article)}
               fill
-              className="object-cover group-hover:scale-105 transition duration-500"
+              className="object-contain group-hover:scale-105 transition duration-500"
               priority={priority}
             />
           </div>
