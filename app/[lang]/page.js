@@ -342,9 +342,6 @@ export default function Home({ params: { lang } }) {
         </div>
       </div>
 
-      {/* Logo / Header */}
-
-
       {/* Hero Section: Prothom Alo style - large left + two right */}
       {heroArticle && (
         <div className="container mx-auto px-4 py-6">
@@ -449,8 +446,6 @@ export default function Home({ params: { lang } }) {
       })}
 
       <AdSlot slot={AD_SLOT_FOOTER} format="horizontal" style={{ minHeight: '90px' }} />
-
-      {/* Footer */}
-
+    </div>
   )
 }
