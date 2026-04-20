@@ -343,14 +343,7 @@ export default function Home({ params: { lang } }) {
       </div>
 
       {/* Logo / Header */}
-      <div className="bg-white border-b shadow-sm">
-        <div className="container mx-auto px-4 py-6 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-red-700 tracking-tight">
-            {lang === 'bn' ? 'দৈনিক অভিমত' : 'Doinik Ovimot'}
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">{lang === 'bn' ? 'সত্যের সন্ধানে' : 'In search of truth'}</p>
-        </div>
-      </div>
+
 
       {/* Hero Section: Prothom Alo style - large left + two right */}
       {heroArticle && (
@@ -458,11 +451,6 @@ export default function Home({ params: { lang } }) {
       <AdSlot slot={AD_SLOT_FOOTER} format="horizontal" style={{ minHeight: '90px' }} />
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8 mt-8">
-        <div className="container mx-auto px-4 text-center">
-          <p>© {new Date().getFullYear()} Doinik Ovimot. {lang === 'bn' ? 'সর্বস্বত্ব সংরক্ষিত' : 'All rights reserved.'}</p>
-        </div>
-      </footer>
-    </div>
+
   )
 }
