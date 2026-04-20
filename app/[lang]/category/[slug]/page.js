@@ -12,7 +12,6 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 
 export default function CategoryPage() {
   const params = useParams()
-  // slug might be a string or an array (e.g., ['politics'] when using catch-all routes)
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug
   const lang = Array.isArray(params.lang) ? params.lang[0] : params.lang
 
@@ -20,7 +19,6 @@ export default function CategoryPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Normalize category: first letter uppercase, rest lowercase
   const normalizedCategory = slug ? slug.charAt(0).toUpperCase() + slug.slice(1).toLowerCase() : ''
 
   useEffect(() => {
@@ -30,7 +28,6 @@ export default function CategoryPage() {
   async function fetchCategoryArticles() {
     setLoading(true)
     setError(null)
-
     try {
       const { data, error } = await supabase
         .from('articles')
@@ -38,7 +35,6 @@ export default function CategoryPage() {
         .eq('category', normalizedCategory)
         .eq('status', 'published')
         .order('published_at', { ascending: false })
-
       if (error) throw error
       setArticles(data || [])
     } catch (err) {
@@ -60,7 +56,6 @@ export default function CategoryPage() {
     }
   }
 
-  // Localized category names
   const categoryNames = {
     bn: {
       politics: 'রাজনীতি',
@@ -82,13 +77,11 @@ export default function CategoryPage() {
 
   const categoryName = categoryNames[lang]?.[slug?.toLowerCase()] || slug || 'Category'
 
-  // Helper: get localized title
   const getLocalizedTitle = (article) => {
     if (lang === 'bn' && article.title_bn) return article.title_bn
     return article.title
   }
 
-  // Helper: get localized excerpt
   const getLocalizedExcerpt = (article) => {
     if (lang === 'bn' && article.excerpt_bn) return article.excerpt_bn
     return article.excerpt
@@ -139,10 +132,9 @@ export default function CategoryPage() {
                     src={article.featured_image}
                     alt={getLocalizedTitle(article)}
                     fill
-                    className="object-cover" // or "object-contain" if you prefer no cropping
+                    className="object-contain" // ← Full image, no cropping
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     onError={(e) => {
-                      // If image fails to load, replace with a fallback
                       e.currentTarget.style.display = 'none'
                       const parent = e.currentTarget.parentElement
                       if (parent) {
