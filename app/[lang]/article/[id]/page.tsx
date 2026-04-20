@@ -1,15 +1,11 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/utils/supabase/server'
+import { createClient } from '@/lib/supabase-server'
 import { Calendar, Eye, User, ArrowLeft } from 'lucide-react'
 import { format } from 'date-fns'
 import { bn } from 'date-fns/locale'
 
-type Props = {
-  params: { lang: string; id: string }
-}
-
-export async function generateMetadata({ params }: Props) {
+export async function generateMetadata({ params }) {
   const supabase = createClient()
   const { data: article } = await supabase
     .from('articles')
@@ -28,15 +24,21 @@ export async function generateMetadata({ params }: Props) {
     title: `${title} | Doinik Obhimot`,
     description: desc,
     openGraph: {
-      title, description: desc,
+      title,
+      description: desc,
       images: article.featured_image ? [article.featured_image] : [],
       type: 'article',
     },
-    twitter: { card: 'summary_large_image', title, description: desc, images: article.featured_image ? [article.featured_image] : [] },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description: desc,
+      images: article.featured_image ? [article.featured_image] : [],
+    },
   }
 }
 
-export default async function ArticlePage({ params }: Props) {
+export default async function ArticlePage({ params }) {
   const supabase = createClient()
   const { data: article, error } = await supabase
     .from('articles')
@@ -52,6 +54,7 @@ export default async function ArticlePage({ params }: Props) {
   const content = isBn && article.content_bn ? article.content_bn : article.content
   const excerpt = isBn && article.excerpt_bn ? article.excerpt_bn : article.excerpt
   
+  // Update view count (don't wait)
   supabase.from('articles').update({ views: (article.views || 0) + 1 }).eq('id', params.id).then()
   
   return (
@@ -64,7 +67,7 @@ export default async function ArticlePage({ params }: Props) {
         <h1 className="text-3xl md:text-5xl font-bold mb-4">{title}</h1>
         <div className="flex gap-4 text-gray-600 border-t border-b py-4 mb-6">
           <span className="flex items-center gap-1"><User size={16} /> {article.author || 'Doinik Obhimot'}</span>
-          <span className="flex items-center gap-1"><Calendar size={16} /> {format(new Date(article.published_at), 'PPP')}</span>
+          <span className="flex items-center gap-1"><Calendar size={16} /> {format(new Date(article.published_at), 'PPP', { locale: isBn ? bn : undefined })}</span>
           <span className="flex items-center gap-1"><Eye size={16} /> {article.views || 0}</span>
         </div>
         
@@ -76,8 +79,17 @@ export default async function ArticlePage({ params }: Props) {
         
         <div dangerouslySetInnerHTML={{ __html: content }} className="prose max-w-none" />
         
-        <button onClick={() => navigator.share?.({ title, url: window.location.href }) || alert('Link copied')} 
-          className="mt-8 bg-red-600 text-white px-6 py-2 rounded-lg">
+        <button 
+          onClick={() => {
+            if (navigator.share) {
+              navigator.share({ title, url: window.location.href })
+            } else {
+              navigator.clipboard.writeText(window.location.href)
+              alert(isBn ? 'লিংক কপি করা হয়েছে!' : 'Link copied!')
+            }
+          }}
+          className="mt-8 bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700"
+        >
           {isBn ? 'শেয়ার করুন' : 'Share'}
         </button>
       </article>
