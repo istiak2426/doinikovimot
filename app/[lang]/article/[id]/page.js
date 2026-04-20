@@ -7,7 +7,7 @@ import Head from 'next/head'
 import { Calendar, Eye, User, ArrowLeft } from 'lucide-react'
 import { format } from 'date-fns'
 import { bn } from 'date-fns/locale'
-import supabase from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
 export default function ArticlePage() {
@@ -34,26 +34,11 @@ export default function ArticlePage() {
     try {
       setLoading(true)
       
-      // Try fetching by id first
-      let { data, error } = await supabase
+      const { data, error } = await supabase
         .from('articles')
         .select('*')
         .eq('id', id)
         .single()
-      
-      // If not found by id, try by slug
-      if (error || !data) {
-        const { data: slugData, error: slugError } = await supabase
-          .from('articles')
-          .select('*')
-          .eq('slug', id)
-          .single()
-        
-        if (!slugError && slugData) {
-          data = slugData
-          error = null
-        }
-      }
       
       if (error) throw error
       if (!data) throw new Error('Article not found')
