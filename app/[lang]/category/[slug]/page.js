@@ -11,35 +11,56 @@ import { supabase } from '@/lib/supabase'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
 export default function CategoryPage() {
-  const { slug, lang } = useParams()
+  const params = useParams()
+  // slug might be a string or an array (e.g., ['politics'] when using catch-all routes)
+  const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug
+  const lang = Array.isArray(params.lang) ? params.lang[0] : params.lang
+
   const [articles, setArticles] = useState([])
-  const [category, setCategory] = useState(null)
   const [loading, setLoading] = useState(true)
-  
+  const [error, setError] = useState(null)
+
+  // Normalize category: first letter uppercase, rest lowercase
+  const normalizedCategory = slug ? slug.charAt(0).toUpperCase() + slug.slice(1).toLowerCase() : ''
+
   useEffect(() => {
     if (slug) fetchCategoryArticles()
   }, [slug, lang])
-  
+
   async function fetchCategoryArticles() {
     setLoading(true)
-    
-    const { data: articlesData } = await supabase
-      .from('articles')
-      .select('*')
-      .eq('category', slug.charAt(0).toUpperCase() + slug.slice(1))
-      .eq('status', 'published')
-      .order('published_at', { ascending: false })
-    
-    if (articlesData) setArticles(articlesData)
-    setLoading(false)
+    setError(null)
+
+    try {
+      const { data, error } = await supabase
+        .from('articles')
+        .select('*')
+        .eq('category', normalizedCategory)
+        .eq('status', 'published')
+        .order('published_at', { ascending: false })
+
+      if (error) throw error
+      setArticles(data || [])
+    } catch (err) {
+      console.error('Failed to fetch category articles:', err)
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
-  
+
   const formatDate = (date) => {
-    return format(new Date(date), 'PP', {
-      locale: lang === 'bn' ? bn : undefined
-    })
+    if (!date) return ''
+    try {
+      return format(new Date(date), 'PP', {
+        locale: lang === 'bn' ? bn : undefined,
+      })
+    } catch {
+      return date
+    }
   }
-  
+
+  // Localized category names
   const categoryNames = {
     bn: {
       politics: 'রাজনীতি',
@@ -47,6 +68,7 @@ export default function CategoryPage() {
       business: 'বাণিজ্য',
       sports: 'খেলা',
       entertainment: 'বিনোদন',
+      international: 'আন্তর্জাতিক',
     },
     en: {
       politics: 'Politics',
@@ -54,13 +76,43 @@ export default function CategoryPage() {
       business: 'Business',
       sports: 'Sports',
       entertainment: 'Entertainment',
-    }
+      international: 'International',
+    },
   }
-  
-  const categoryName = categoryNames[lang]?.[slug] || slug
-  
+
+  const categoryName = categoryNames[lang]?.[slug?.toLowerCase()] || slug || 'Category'
+
+  // Helper: get localized title
+  const getLocalizedTitle = (article) => {
+    if (lang === 'bn' && article.title_bn) return article.title_bn
+    return article.title
+  }
+
+  // Helper: get localized excerpt
+  const getLocalizedExcerpt = (article) => {
+    if (lang === 'bn' && article.excerpt_bn) return article.excerpt_bn
+    return article.excerpt
+  }
+
   if (loading) return <LoadingSpinner />
-  
+
+  if (error) {
+    return (
+      <div className="container-custom py-8 text-center">
+        <div className="bg-red-50 text-red-600 p-6 rounded-lg max-w-md mx-auto">
+          <p className="text-lg font-semibold mb-2">Failed to load articles</p>
+          <p className="text-sm mb-4">{error}</p>
+          <button
+            onClick={fetchCategoryArticles}
+            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="container-custom py-8">
       <div className="mb-8">
@@ -68,36 +120,61 @@ export default function CategoryPage() {
           {categoryName}
         </h1>
       </div>
-      
+
       {articles.length === 0 ? (
         <p className="text-center text-gray-500 py-12">
           {lang === 'bn' ? 'কোনো আর্টিকেল পাওয়া যায়নি' : 'No articles found'}
         </p>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {articles.map(article => (
-            <article key={article.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition">
-              {article.featured_image && (
-                <div className="h-48 relative">
+          {articles.map((article) => (
+            <article
+              key={article.id}
+              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition flex flex-col"
+            >
+              {/* Image section with fallback */}
+              <div className="relative h-48 bg-gray-100">
+                {article.featured_image ? (
                   <Image
                     src={article.featured_image}
-                    alt={article.title}
+                    alt={getLocalizedTitle(article)}
                     fill
-                    className="object-cover"
+                    className="object-cover" // or "object-contain" if you prefer no cropping
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    onError={(e) => {
+                      // If image fails to load, replace with a fallback
+                      e.currentTarget.style.display = 'none'
+                      const parent = e.currentTarget.parentElement
+                      if (parent) {
+                        const fallbackDiv = document.createElement('div')
+                        fallbackDiv.className = 'w-full h-full flex items-center justify-center bg-gray-200 text-gray-500'
+                        fallbackDiv.innerHTML = '📷'
+                        parent.appendChild(fallbackDiv)
+                      }
+                    }}
                   />
-                </div>
-              )}
-              <div className="p-4">
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500">
+                    <span className="text-sm">No image</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 flex-1 flex flex-col">
                 <Link href={`/${lang}/article/${article.id}`}>
-                  <h2 className={`text-xl font-bold mb-2 hover:text-red-600 transition ${lang === 'bn' ? 'font-bangla' : ''}`}>
-                    {lang === 'bn' && article.title_bn ? article.title_bn : article.title}
+                  <h2
+                    className={`text-xl font-bold mb-2 hover:text-red-600 transition line-clamp-2 ${
+                      lang === 'bn' ? 'font-bangla' : ''
+                    }`}
+                  >
+                    {getLocalizedTitle(article)}
                   </h2>
                 </Link>
                 <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                  {lang === 'bn' && article.excerpt_bn ? article.excerpt_bn : article.excerpt}
+                  {getLocalizedExcerpt(article)}
                 </p>
-                <div className="flex justify-between items-center text-sm text-gray-500">
-                  <span>{article.author}</span>
+                <div className="flex justify-between items-center text-sm text-gray-500 mt-auto">
+                  <span>{article.author || (lang === 'bn' ? 'স্টাফ' : 'Staff')}</span>
                   <div className="flex items-center gap-1">
                     <Calendar size={14} />
                     <span>{formatDate(article.published_at)}</span>
