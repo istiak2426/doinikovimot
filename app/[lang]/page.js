@@ -3,16 +3,16 @@
 import { useState, useEffect, memo, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Calendar, Eye, TrendingUp, Clock, RefreshCw } from 'lucide-react'
+import { Calendar, Eye, TrendingUp, Clock, RefreshCw, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
 import { bn } from 'date-fns/locale'
 import { supabase } from '@/lib/supabase'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
 // --------------------------------------------------------------
-// 🔧 AdSense readiness – set to true when you want to enable ads
+// AdSense (unchanged)
 // --------------------------------------------------------------
-const ADSENSE_READY = false  // 👈 Change to true when ready
+const ADSENSE_READY = false
 const ADSENSE_CLIENT = 'ca-pub-XXXXXXXXXXXXXXXX'
 const AD_SLOT_HERO = '1234567890'
 const AD_SLOT_INFEED = '1234567891'
@@ -45,67 +45,93 @@ const AdSlot = ({ slot, format = 'auto', style = {} }) => {
 }
 
 // --------------------------------------------------------------
-// Memoized Article Card
+// Helper: format date in Bengali style
 // --------------------------------------------------------------
-const ArticleCard = memo(({ article, lang, formatDate, getLocalizedTitle, getLocalizedExcerpt }) => {
-  const title = getLocalizedTitle(article)
-  const excerpt = getLocalizedExcerpt(article)
-  const date = formatDate(article.published_at)
+const formatBanglaDate = (date, lang) => {
+  if (!date) return ''
+  const d = new Date(date)
+  if (lang === 'bn') {
+    return d.toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' })
+  }
+  return format(d, 'PP')
+}
 
-  return (
-    <article className="article-card group bg-white rounded-lg shadow-sm hover:shadow-md transition">
+// --------------------------------------------------------------
+// Article Card (compact for sidebars)
+// --------------------------------------------------------------
+const CompactArticleCard = memo(({ article, lang, getLocalizedTitle }) => (
+  <Link href={`/${lang}/article/${article.id}`}>
+    <div className="flex gap-3 border-b border-gray-100 py-3 hover:bg-gray-50 transition">
       {article.featured_image && (
-        <Link href={`/${lang}/article/${article.id}`}>
-          <div className="relative h-48 md:h-56 overflow-hidden rounded-t-lg">
-            <Image
-              src={article.featured_image}
-              alt={title}
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
-              className="object-cover group-hover:scale-105 transition duration-300"
-              onError={(e) => {
-                e.currentTarget.src = 'https://via.placeholder.com/600x400?text=No+Image'
-              }}
-            />
-          </div>
-        </Link>
+        <div className="relative w-20 h-20 flex-shrink-0">
+          <Image
+            src={article.featured_image}
+            alt={getLocalizedTitle(article)}
+            fill
+            className="object-cover rounded"
+          />
+        </div>
       )}
-      <div className="p-3 md:p-4">
-        <Link href={`/${lang}/category/${article.category?.toLowerCase()}`}>
-          <span className="text-red-600 text-xs md:text-sm font-semibold hover:underline">
-            {article.category}
-          </span>
-        </Link>
-        <Link href={`/${lang}/article/${article.id}`}>
-          <h3 className={`text-base md:text-lg font-bold mt-1 md:mt-2 mb-1 md:mb-2 hover:text-red-600 transition line-clamp-2 ${lang === 'bn' ? 'font-bangla' : ''}`}>
-            {title}
-          </h3>
-        </Link>
-        <p className="text-gray-600 text-xs md:text-sm mb-2 md:mb-3 line-clamp-2 hidden xs:block">
-          {excerpt}
-        </p>
-        <div className="flex justify-between items-center text-xs text-gray-500">
-          <span>{article.author || 'Unknown'}</span>
-          <span>{date}</span>
+      <div className="flex-1">
+        <h3 className={`font-semibold text-sm hover:text-red-600 transition line-clamp-2 ${lang === 'bn' ? 'font-bangla' : ''}`}>
+          {getLocalizedTitle(article)}
+        </h3>
+        <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
+          <span>{article.author || 'স্টাফ'}</span>
+          <span>•</span>
+          <span>{formatBanglaDate(article.published_at, lang)}</span>
         </div>
       </div>
-    </article>
-  )
-})
-ArticleCard.displayName = 'ArticleCard'
+    </div>
+  </Link>
+))
+CompactArticleCard.displayName = 'CompactArticleCard'
 
-const SkeletonCard = () => (
-  <div className="animate-pulse">
-    <div className="bg-gray-200 h-48 md:h-56 rounded-t-lg"></div>
-    <div className="p-4 space-y-3">
-      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-      <div className="h-5 bg-gray-200 rounded w-3/4"></div>
-      <div className="h-4 bg-gray-200 rounded w-full"></div>
-      <div className="flex justify-between">
-        <div className="h-3 bg-gray-200 rounded w-1/3"></div>
-        <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+// --------------------------------------------------------------
+// Main Article Card (for hero and featured)
+// --------------------------------------------------------------
+const MainArticleCard = memo(({ article, lang, getLocalizedTitle, getLocalizedExcerpt, formatDate, size = 'large' }) => (
+  <Link href={`/${lang}/article/${article.id}`}>
+    <div className="group cursor-pointer">
+      {article.featured_image && (
+        <div className={`relative overflow-hidden rounded-md ${size === 'large' ? 'h-64 md:h-80' : 'h-48'}`}>
+          <Image
+            src={article.featured_image}
+            alt={getLocalizedTitle(article)}
+            fill
+            className="object-cover group-hover:scale-105 transition duration-500"
+          />
+        </div>
+      )}
+      <div className="mt-3">
+        <span className="text-red-600 text-xs uppercase font-bold tracking-wide">{article.category}</span>
+        <h2 className={`font-bold mt-1 hover:text-red-600 transition line-clamp-2 ${size === 'large' ? 'text-xl md:text-2xl' : 'text-lg'} ${lang === 'bn' ? 'font-bangla' : ''}`}>
+          {getLocalizedTitle(article)}
+        </h2>
+        {size === 'large' && (
+          <p className="text-gray-600 text-sm mt-2 line-clamp-2">{getLocalizedExcerpt(article)}</p>
+        )}
+        <div className="flex items-center gap-3 text-xs text-gray-400 mt-2">
+          <span>{formatDate(article.published_at)}</span>
+          <span className="flex items-center gap-1"><Eye size={12} /> {article.views || 0}</span>
+        </div>
       </div>
     </div>
+  </Link>
+))
+MainArticleCard.displayName = 'MainArticleCard'
+
+// --------------------------------------------------------------
+// Section Header (with "more" link)
+// --------------------------------------------------------------
+const SectionHeader = ({ title, seeAllLink, lang }) => (
+  <div className="flex justify-between items-center border-b-2 border-red-600 pb-2 mb-4">
+    <h2 className="text-xl md:text-2xl font-bold text-gray-800">{title}</h2>
+    {seeAllLink && (
+      <Link href={seeAllLink} className="text-red-600 text-sm hover:underline flex items-center gap-1">
+        {lang === 'bn' ? 'সব দেখুন' : 'See all'} <ChevronRight size={16} />
+      </Link>
+    )}
   </div>
 )
 
@@ -116,17 +142,15 @@ export default function Home({ params: { lang } }) {
   const [featuredArticles, setFeaturedArticles] = useState([])
   const [latestArticles, setLatestArticles] = useState([])
   const [trendingArticles, setTrendingArticles] = useState([])
+  const [categoryArticles, setCategoryArticles] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Fetch articles with optional cache bypass
   const fetchArticles = useCallback(async (bypassCache = false) => {
     setLoading(true)
     setError(null)
 
-    const cacheKey = `home_articles_${lang}`
-    
-    // Check cache only if not bypassing
+    const cacheKey = `home_articles_prothom_${lang}`
     if (!bypassCache) {
       const cached = sessionStorage.getItem(cacheKey)
       const cacheTime = sessionStorage.getItem(`${cacheKey}_time`)
@@ -136,39 +160,74 @@ export default function Home({ params: { lang } }) {
           setFeaturedArticles(data.featured)
           setLatestArticles(data.latest)
           setTrendingArticles(data.trending)
+          setCategoryArticles(data.categoryArticles)
           setLoading(false)
           return
-        } catch (e) {
-          console.warn('Cache parse error', e)
-        }
+        } catch (e) {}
       }
     }
 
     try {
-      const [featuredRes, latestRes, trendingRes] = await Promise.all([
-        supabase.from('articles').select('*').eq('status', 'published').eq('is_featured', true).order('views', { ascending: false }).limit(3),
-        supabase.from('articles').select('*').eq('status', 'published').order('published_at', { ascending: false }).limit(6),
-        supabase.from('articles').select('*').eq('status', 'published').order('views', { ascending: false }).limit(5)
-      ])
+      // Fetch main featured (is_featured = true)
+      const { data: featured, error: fErr } = await supabase
+        .from('articles')
+        .select('*')
+        .eq('status', 'published')
+        .eq('is_featured', true)
+        .order('views', { ascending: false })
+        .limit(4)
 
-      if (featuredRes.error) throw featuredRes.error
-      if (latestRes.error) throw latestRes.error
-      if (trendingRes.error) throw trendingRes.error
+      if (fErr) throw fErr
 
-      const featured = featuredRes.data || []
-      const latest = latestRes.data || []
-      const trending = trendingRes.data || []
+      // Latest 8 articles
+      const { data: latest, error: lErr } = await supabase
+        .from('articles')
+        .select('*')
+        .eq('status', 'published')
+        .order('published_at', { ascending: false })
+        .limit(8)
 
-      setFeaturedArticles(featured)
-      setLatestArticles(latest)
-      setTrendingArticles(trending)
+      if (lErr) throw lErr
 
-      // Cache the fresh data
-      sessionStorage.setItem(cacheKey, JSON.stringify({ featured, latest, trending }))
+      // Trending (most viewed) 6
+      const { data: trending, error: tErr } = await supabase
+        .from('articles')
+        .select('*')
+        .eq('status', 'published')
+        .order('views', { ascending: false })
+        .limit(6)
+
+      if (tErr) throw tErr
+
+      // Category specific: National, International, Sports, Entertainment
+      const categories = ['Politics', 'Technology', 'Business', 'Sports', 'Entertainment', 'Health', 'International']
+      const categoryData = {}
+      for (const cat of categories) {
+        const { data } = await supabase
+          .from('articles')
+          .select('*')
+          .eq('status', 'published')
+          .eq('category', cat)
+          .order('published_at', { ascending: false })
+          .limit(4)
+        categoryData[cat] = data || []
+      }
+
+      setFeaturedArticles(featured || [])
+      setLatestArticles(latest || [])
+      setTrendingArticles(trending || [])
+      setCategoryArticles(categoryData)
+
+      sessionStorage.setItem(cacheKey, JSON.stringify({
+        featured: featured || [],
+        latest: latest || [],
+        trending: trending || [],
+        categoryArticles: categoryData
+      }))
       sessionStorage.setItem(`${cacheKey}_time`, Date.now().toString())
     } catch (err) {
       console.error('Fetch error:', err)
-      setError(err.message || 'Failed to load articles')
+      setError(err.message)
     } finally {
       setLoading(false)
     }
@@ -181,12 +240,8 @@ export default function Home({ params: { lang } }) {
   const formatDate = useCallback((date) => {
     if (!date) return ''
     try {
-      return format(new Date(date), 'PP', {
-        locale: lang === 'bn' ? bn : undefined
-      })
-    } catch {
-      return date
-    }
+      return format(new Date(date), 'PP', { locale: lang === 'bn' ? bn : undefined })
+    } catch { return date }
   }, [lang])
 
   const getLocalizedTitle = useCallback((article) => {
@@ -199,198 +254,142 @@ export default function Home({ params: { lang } }) {
     return article.excerpt
   }, [lang])
 
-  // Structured data (JSON-LD)
-  useEffect(() => {
-    if (typeof window === 'undefined' || latestArticles.length === 0) return
-    const script = document.createElement('script')
-    script.type = 'application/ld+json'
-    script.textContent = JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "CollectionPage",
-      "name": lang === 'bn' ? "দৈনিক অভিমত - হোম" : "Doinik Ovimot - Home",
-      "description": lang === 'bn' ? "সর্বশেষ সংবাদ, বিশ্লেষণ এবং ট্রেন্ডিং খবর" : "Latest news, analysis and trending stories",
-      "url": window.location.href,
-      "mainEntity": {
-        "@type": "ItemList",
-        "itemListElement": latestArticles.slice(0, 5).map((article, idx) => ({
-          "@type": "ListItem",
-          "position": idx + 1,
-          "url": `/${lang}/article/${article.id}`
-        }))
-      }
-    })
-    document.head.appendChild(script)
-    return () => {
-      document.head.removeChild(script)
-    }
-  }, [lang, latestArticles])
-
   if (loading) return <LoadingSpinner />
 
-  return (
-    <div className="pb-16 md:pb-0">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-gray-900 to-gray-700 text-white py-8 md:py-16">
-        <div className="container-custom">
-          <h1 className="heading-1 text-center mb-6 md:mb-8">
-            {lang === 'bn' ? 'সর্বশেষ সংবাদ ও বিশ্লেষণ' : 'Latest News & Analysis'}
-          </h1>
+  // Hero article (first featured)
+  const heroArticle = featuredArticles[0]
+  const subHeroArticles = featuredArticles.slice(1, 3)
 
-          {featuredArticles.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-              {featuredArticles.map((article, index) => (
-                <Link href={`/${lang}/article/${article.id}`} key={article.id}>
-                  <div className={`bg-white/10 backdrop-blur-sm rounded-lg overflow-hidden hover:bg-white/20 transition ${index === 0 ? 'md:col-span-2 md:row-span-2' : ''
-                    }`}>
-                    {article.featured_image && (
-                      <div className={`relative ${index === 0 ? 'h-56 md:h-64' : 'h-40 md:h-48'}`}>
-                        <Image
-                          src={article.featured_image}
-                          alt={getLocalizedTitle(article)}
-                          fill
-                          sizes="(max-width: 768px) 100vw, 50vw"
-                          className="object-cover hover:scale-105 transition duration-300"
-                          onError={(e) => {
-                            e.currentTarget.src = 'https://via.placeholder.com/600x400?text=No+Image'
-                          }}
-                        />
-                      </div>
-                    )}
-                    <div className="p-3 md:p-4">
-                      <span className="text-red-400 text-xs md:text-sm font-semibold">{article.category}</span>
-                      <h2 className={`text-base md:text-xl font-bold mt-1 md:mt-2 mb-1 md:mb-2 line-clamp-2 ${lang === 'bn' ? 'font-bangla' : ''}`}>
-                        {getLocalizedTitle(article)}
-                      </h2>
-                      <p className="text-gray-300 text-xs md:text-sm line-clamp-2 hidden sm:block">
-                        {getLocalizedExcerpt(article)}
-                      </p>
-                      <div className="flex items-center gap-3 md:gap-4 mt-2 md:mt-3 text-xs text-gray-400">
-                        <span className="flex items-center gap-1">
-                          <Calendar size={12} className="md:w-4 md:h-4" />
-                          {formatDate(article.published_at)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Eye size={12} className="md:w-4 md:h-4" />
-                          {article.views || 0}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+  return (
+    <div className="bg-gray-50 font-serif">
+      {/* Top Bar with Date */}
+      <div className="bg-white border-b">
+        <div className="container mx-auto px-4 py-2 text-sm text-gray-500 flex justify-between items-center">
+          <span>{formatBanglaDate(new Date(), lang)}</span>
+          <button onClick={() => fetchArticles(true)} className="text-red-600 hover:text-red-700 flex items-center gap-1">
+            <RefreshCw size={14} /> {lang === 'bn' ? 'রিফ্রেশ' : 'Refresh'}
+          </button>
+        </div>
+      </div>
+
+      {/* Logo / Header */}
+      <div className="bg-white border-b shadow-sm">
+        <div className="container mx-auto px-4 py-6 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold text-red-700 tracking-tight">
+            {lang === 'bn' ? 'দৈনিক অভিমত' : 'Doinik Ovimot'}
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">{lang === 'bn' ? 'সত্যের সন্ধানে' : 'In search of truth'}</p>
+        </div>
+      </div>
+
+      {/* Hero Section: Prothom Alo style - large left + two right */}
+      {heroArticle && (
+        <div className="container mx-auto px-4 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Main hero */}
+            <div className="md:col-span-2">
+              <MainArticleCard
+                article={heroArticle}
+                lang={lang}
+                getLocalizedTitle={getLocalizedTitle}
+                getLocalizedExcerpt={getLocalizedExcerpt}
+                formatDate={formatDate}
+                size="large"
+              />
+            </div>
+            {/* Right side: two sub-hero articles */}
+            <div className="space-y-6">
+              {subHeroArticles.map(article => (
+                <MainArticleCard
+                  key={article.id}
+                  article={article}
+                  lang={lang}
+                  getLocalizedTitle={getLocalizedTitle}
+                  getLocalizedExcerpt={getLocalizedExcerpt}
+                  formatDate={formatDate}
+                  size="small"
+                />
               ))}
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-400">{lang === 'bn' ? 'কোনো ফিচার্ড আর্টিকেল নেই' : 'No featured articles'}</p>
-            </div>
-          )}
+          </div>
         </div>
-      </section>
+      )}
 
       <AdSlot slot={AD_SLOT_HERO} style={{ minHeight: '90px' }} />
 
-      {/* Latest News Section with Refresh Button */}
-      <section className="container-custom py-8 md:py-12">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 md:mb-8">
-          <h2 className="heading-2 border-l-4 border-red-600 pl-3 md:pl-4">
-            {lang === 'bn' ? 'সর্বশেষ সংবাদ' : 'Latest News'}
-          </h2>
-          <div className="flex items-center gap-4 mt-2 md:mt-0">
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Clock size={14} />
-              <span>{lang === 'bn' ? 'সর্বশেষ আপডেট' : 'Latest updates'}</span>
-            </div>
-            <button
-              onClick={() => fetchArticles(true)}
-              className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 transition"
-              title="Refresh articles"
-            >
-              <RefreshCw size={14} />
-              <span>{lang === 'bn' ? 'রিফ্রেশ' : 'Refresh'}</span>
-            </button>
-          </div>
-        </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-            <strong>Error:</strong> {error}
-            <button
-              onClick={() => fetchArticles(true)}
-              className="ml-4 underline hover:no-underline"
-            >
-              Try again
-            </button>
-          </div>
-        )}
-
-        {latestArticles.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {latestArticles.map((article, idx) => (
-              <div key={article.id}>
-                <ArticleCard
+      {/* Latest News + Trending Sidebar (two columns) */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left: Latest News Grid */}
+          <div className="lg:col-span-2">
+            <SectionHeader title={lang === 'bn' ? 'সর্বশেষ খবর' : 'Latest News'} seeAllLink={`/${lang}/category/all`} lang={lang} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {latestArticles.slice(0, 6).map(article => (
+                <MainArticleCard
+                  key={article.id}
                   article={article}
                   lang={lang}
-                  formatDate={formatDate}
                   getLocalizedTitle={getLocalizedTitle}
                   getLocalizedExcerpt={getLocalizedExcerpt}
+                  formatDate={formatDate}
+                  size="small"
                 />
-                {idx === 2 && (
-                  <div className="hidden sm:block my-6">
-                    <AdSlot slot={AD_SLOT_INFEED} format="rectangle" style={{ minHeight: '250px' }} />
-                  </div>
-                )}
-                {idx === 1 && (
-                  <div className="block sm:hidden my-4">
-                    <AdSlot slot={AD_SLOT_INFEED} format="rectangle" style={{ minHeight: '250px' }} />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <p className="text-gray-500">{lang === 'bn' ? 'কোনো আর্টিকেল পাওয়া যায়নি' : 'No articles found'}</p>
-            <Link href={`/${lang}/admin/new-article`} className="inline-block mt-4 text-red-600 hover:text-red-700">
-              {lang === 'bn' ? 'প্রথম আর্টিকেল তৈরি করুন' : 'Create first article'}
-            </Link>
-          </div>
-        )}
-      </section>
-
-      {/* Trending Section */}
-      {trendingArticles.length > 0 && (
-        <section className="bg-gray-50 py-8 md:py-12">
-          <div className="container-custom">
-            <h2 className="heading-2 flex items-center gap-2 mb-6 md:mb-8">
-              <TrendingUp className="text-red-600" size={24} />
-              {lang === 'bn' ? 'ট্রেন্ডিং সংবাদ' : 'Trending News'}
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {trendingArticles.map((article, index) => (
-                <Link href={`/${lang}/article/${article.id}`} key={article.id}>
-                  <div className="flex items-start gap-3 p-3 bg-white rounded-lg hover:shadow-md transition">
-                    <div className="text-2xl md:text-3xl font-bold text-red-600 min-w-[40px]">
-                      #{index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className={`font-semibold text-sm md:text-base hover:text-red-600 transition line-clamp-2 ${lang === 'bn' ? 'font-bangla' : ''}`}>
-                        {getLocalizedTitle(article)}
-                      </h3>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                        <Eye size={12} />
-                        <span>{article.views || 0} {lang === 'bn' ? 'দর্শন' : 'views'}</span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+              ))}
+            </div>
+            {/* Infeed ad */}
+            <div className="my-8">
+              <AdSlot slot={AD_SLOT_INFEED} format="rectangle" style={{ minHeight: '250px' }} />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {latestArticles.slice(6, 8).map(article => (
+                <MainArticleCard key={article.id} article={article} lang={lang} getLocalizedTitle={getLocalizedTitle} getLocalizedExcerpt={getLocalizedExcerpt} formatDate={formatDate} size="small" />
               ))}
             </div>
           </div>
-        </section>
-      )}
+
+          {/* Right: Trending + Popular */}
+          <div>
+            <SectionHeader title={lang === 'bn' ? 'সর্বাধিক পঠিত' : 'Most Read'} lang={lang} />
+            <div className="space-y-1">
+              {trendingArticles.map((article, idx) => (
+                <div key={article.id} className="flex items-start gap-3 p-2 border-b border-gray-100">
+                  <div className="text-2xl font-bold text-red-500 w-10">{idx + 1}</div>
+                  <div className="flex-1">
+                    <Link href={`/${lang}/article/${article.id}`}>
+                      <h3 className={`font-semibold text-sm hover:text-red-600 transition line-clamp-2 ${lang === 'bn' ? 'font-bangla' : ''}`}>
+                        {getLocalizedTitle(article)}
+                      </h3>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Category Sections (like Prothom Alo's "জাতীয়", "আন্তর্জাতিক", etc.) */}
+      {['Politics', 'Business', 'Sports', 'Entertainment', 'International'].map(cat => (
+        categoryArticles[cat] && categoryArticles[cat].length > 0 && (
+          <div key={cat} className="container mx-auto px-4 py-6 border-t border-gray-200">
+            <SectionHeader title={cat} seeAllLink={`/${lang}/category/${cat.toLowerCase()}`} lang={lang} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+              {categoryArticles[cat].slice(0, 4).map(article => (
+                <CompactArticleCard key={article.id} article={article} lang={lang} getLocalizedTitle={getLocalizedTitle} />
+              ))}
+            </div>
+          </div>
+        )
+      ))}
 
       <AdSlot slot={AD_SLOT_FOOTER} format="horizontal" style={{ minHeight: '90px' }} />
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-8 mt-8">
+        <div className="container mx-auto px-4 text-center">
+          <p>© {new Date().getFullYear()} Doinik Ovimot. {lang === 'bn' ? 'সর্বস্বত্ব সংরক্ষিত' : 'All rights reserved.'}</p>
+        </div>
+      </footer>
     </div>
   )
 }
