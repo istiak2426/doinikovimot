@@ -7,7 +7,7 @@ import Head from 'next/head'
 import { Calendar, Eye, User, ArrowLeft } from 'lucide-react'
 import { format } from 'date-fns'
 import { bn } from 'date-fns/locale'
-import { createClient } from '@/lib/supabase'
+import supabase from '@/lib/supabase'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
 export default function ArticlePage() {
@@ -33,7 +33,6 @@ export default function ArticlePage() {
   async function fetchArticle() {
     try {
       setLoading(true)
-      const supabase = createClient()
       
       // Try fetching by id first
       let { data, error } = await supabase
