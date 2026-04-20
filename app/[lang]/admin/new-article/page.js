@@ -81,11 +81,16 @@ async function uploadVideo(file) {
   return publicUrl
 }
 
-// External video embed generators
+// External video embed generators (wrapped with centering)
+function wrapWithCenter(html) {
+  return `<div class="flex justify-center my-4">${html}</div>`
+}
+
 function youtubeEmbed(url) {
   const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/)
   if (match && match[2].length === 11) {
-    return `<iframe width="560" height="315" src="https://www.youtube.com/embed/${match[2]}" frameborder="0" allowfullscreen class="my-4"></iframe>`
+    const iframe = `<iframe width="560" height="315" src="https://www.youtube.com/embed/${match[2]}" frameborder="0" allowfullscreen style="max-width:100%;"></iframe>`
+    return wrapWithCenter(iframe)
   }
   return null
 }
@@ -93,20 +98,26 @@ function youtubeEmbed(url) {
 function vimeoEmbed(url) {
   const match = url.match(/vimeo\.com\/(\d+)/)
   if (match && match[1]) {
-    return `<iframe src="https://player.vimeo.com/video/${match[1]}" width="560" height="315" frameborder="0" allowfullscreen class="my-4"></iframe>`
+    const iframe = `<iframe src="https://player.vimeo.com/video/${match[1]}" width="560" height="315" frameborder="0" allowfullscreen style="max-width:100%;"></iframe>`
+    return wrapWithCenter(iframe)
   }
   return null
 }
 
 function facebookEmbed(url) {
-  return `<iframe src="https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=0&width=560" width="560" height="315" frameborder="0" allowfullscreen class="my-4"></iframe>`
+  const iframe = `<iframe src="https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=0&width=560" width="560" height="315" frameborder="0" allowfullscreen style="max-width:100%;"></iframe>`
+  return wrapWithCenter(iframe)
 }
 
 async function tiktokEmbed(url) {
   try {
     const res = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`)
     const data = await res.json()
-    return data.html || null
+    if (data.html) {
+      // TikTok's HTML already includes a div, but we'll wrap it again to ensure centering
+      return wrapWithCenter(data.html)
+    }
+    return null
   } catch {
     return null
   }
@@ -159,7 +170,7 @@ export default function NewArticle({ params: { lang } }) {
     }
   }
 
-  // Image upload (inline)
+  // Image upload (inline) - centered
   const handleInlineImage = async (field) => {
     const input = document.createElement('input')
     input.type = 'file'
@@ -170,7 +181,7 @@ export default function NewArticle({ params: { lang } }) {
       setUploadingImage(true)
       try {
         const url = await uploadImage(file)
-        const imgTag = `<img src="${url}" alt="Image" class="my-4 max-w-full h-auto" />`
+        const imgTag = `<div class="flex justify-center my-4"><img src="${url}" alt="Image" class="max-w-full h-auto" /></div>`
         insertAtCursor(field, imgTag)
         setSuccess('Image inserted!')
         setTimeout(() => setSuccess(''), 2000)
@@ -183,7 +194,7 @@ export default function NewArticle({ params: { lang } }) {
     input.click()
   }
 
-  // Video file upload
+  // Video file upload (centered)
   const handleInlineVideo = async (field) => {
     const input = document.createElement('input')
     input.type = 'file'
@@ -194,7 +205,7 @@ export default function NewArticle({ params: { lang } }) {
       setUploadingVideo(true)
       try {
         const url = await uploadVideo(file)
-        const videoTag = `<video controls width="100%" class="my-4"><source src="${url}" type="${file.type}">Your browser does not support video.</video>`
+        const videoTag = `<div class="flex justify-center my-4"><video controls class="w-full max-w-2xl"><source src="${url}" type="${file.type}">Your browser does not support video.</video></div>`
         insertAtCursor(field, videoTag)
         setSuccess('Video uploaded & inserted!')
         setTimeout(() => setSuccess(''), 2000)
@@ -207,7 +218,7 @@ export default function NewArticle({ params: { lang } }) {
     input.click()
   }
 
-  // External video link (YouTube, TikTok, FB, Vimeo, or raw iframe)
+  // External video link (centered)
   const handleExternalVideo = async (field) => {
     const url = prompt('Enter video URL (YouTube, TikTok, Facebook Reel, Vimeo) or paste iframe code:')
     if (!url) return
@@ -217,8 +228,14 @@ export default function NewArticle({ params: { lang } }) {
     else if (url.includes('vimeo.com')) embed = vimeoEmbed(url)
     else if (url.includes('facebook.com') || url.includes('fb.com')) embed = facebookEmbed(url)
     else if (url.includes('tiktok.com')) embed = await tiktokEmbed(url)
-    else if (url.trim().startsWith('<iframe')) embed = url
-    else embed = `<video controls width="100%" class="my-4"><source src="${url}" type="video/mp4">Your browser does not support video.</video>`
+    else if (url.trim().startsWith('<iframe')) {
+      // Wrap raw iframe with centering
+      embed = `<div class="flex justify-center my-4">${url}</div>`
+    }
+    else {
+      // Assume direct video URL – wrap in video tag and center
+      embed = `<div class="flex justify-center my-4"><video controls class="w-full max-w-2xl"><source src="${url}" type="video/mp4">Your browser does not support video.</video></div>`
+    }
 
     if (embed) {
       insertAtCursor(field, embed)
@@ -230,7 +247,7 @@ export default function NewArticle({ params: { lang } }) {
     }
   }
 
-  // Featured image upload (separate)
+  // Featured image upload (separate, not centered here because it's a preview)
   const handleFeaturedImage = async (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -348,9 +365,9 @@ export default function NewArticle({ params: { lang } }) {
             value={formData.content}
             onChange={(e) => setFormData({...formData, content: e.target.value})}
             className="w-full px-3 py-2 border rounded-md font-mono"
-            placeholder="Write your article here. Position your cursor and click one of the buttons above to insert images or videos at that exact spot."
+            placeholder="Write your article here. Position your cursor and click one of the buttons above to insert images or videos at that exact spot. All media will be centered automatically."
           />
-          <p className="text-xs text-gray-500 mt-1">HTML supported. You can insert as many images/videos as you like, anywhere in the text.</p>
+          <p className="text-xs text-gray-500 mt-1">HTML supported. Insert as many images/videos as you like – they will be centered.</p>
         </div>
 
         {/* Content (Bangla) with same buttons */}
@@ -375,7 +392,7 @@ export default function NewArticle({ params: { lang } }) {
             value={formData.content_bn}
             onChange={(e) => setFormData({...formData, content_bn: e.target.value})}
             className="w-full px-3 py-2 border rounded-md font-bangla"
-            placeholder="বাংলা কন্টেন্ট (একইভাবে ছবি ও ভিডিও বসাতে পারেন)"
+            placeholder="বাংলা কন্টেন্ট (একইভাবে ছবি ও ভিডিও বসাতে পারেন, স্বয়ংক্রিয়ভাবে মাঝখানে থাকবে)"
           />
         </div>
 
