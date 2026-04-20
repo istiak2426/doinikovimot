@@ -10,21 +10,24 @@ import { supabase } from '@/lib/supabase'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
 // --------------------------------------------------------------
-// AdSense (unchanged)
+// AdSense (safe initialization)
 // --------------------------------------------------------------
-const ADSENSE_READY = false
+const ADSENSE_READY = false // set to true when you have real ad codes
 const ADSENSE_CLIENT = 'ca-pub-XXXXXXXXXXXXXXXX'
 const AD_SLOT_HERO = '1234567890'
 const AD_SLOT_INFEED = '1234567891'
 const AD_SLOT_FOOTER = '1234567892'
 
-if (typeof window !== 'undefined' && ADSENSE_READY && !document.querySelector('script[src*="adsbygoogle.js"]')) {
-  const script = document.createElement('script')
-  script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js'
-  script.async = true
-  script.crossOrigin = 'anonymous'
-  script.setAttribute('data-ad-client', ADSENSE_CLIENT)
-  document.head.appendChild(script)
+// AdSense script initialization (only once, after mount)
+const initAdSense = () => {
+  if (typeof window !== 'undefined' && ADSENSE_READY && !document.querySelector('script[src*="adsbygoogle.js"]')) {
+    const script = document.createElement('script')
+    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js'
+    script.async = true
+    script.crossOrigin = 'anonymous'
+    script.setAttribute('data-ad-client', ADSENSE_CLIENT)
+    document.head.appendChild(script)
+  }
 }
 
 const AdSlot = ({ slot, format = 'auto', style = {} }) => {
@@ -45,7 +48,7 @@ const AdSlot = ({ slot, format = 'auto', style = {} }) => {
 }
 
 // --------------------------------------------------------------
-// Helper: format date in Bengali style
+// Helper: format date consistently (Bengali or English)
 // --------------------------------------------------------------
 const formatBanglaDate = (date, lang) => {
   if (!date) return ''
@@ -59,66 +62,73 @@ const formatBanglaDate = (date, lang) => {
 // --------------------------------------------------------------
 // Article Card (compact for sidebars)
 // --------------------------------------------------------------
-const CompactArticleCard = memo(({ article, lang, getLocalizedTitle }) => (
-  <Link href={`/${lang}/article/${article.id}`}>
-    <div className="flex gap-3 border-b border-gray-100 py-3 hover:bg-gray-50 transition">
-      {article.featured_image && (
-        <div className="relative w-20 h-20 flex-shrink-0">
-          <Image
-            src={article.featured_image}
-            alt={getLocalizedTitle(article)}
-            fill
-            className="object-cover rounded"
-          />
-        </div>
-      )}
-      <div className="flex-1">
-        <h3 className={`font-semibold text-sm hover:text-red-600 transition line-clamp-2 ${lang === 'bn' ? 'font-bangla' : ''}`}>
-          {getLocalizedTitle(article)}
-        </h3>
-        <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
-          <span>{article.author || 'স্টাফ'}</span>
-          <span>•</span>
-          <span>{formatBanglaDate(article.published_at, lang)}</span>
+const CompactArticleCard = memo(({ article, lang, getLocalizedTitle }) => {
+  if (!article) return null
+  return (
+    <Link href={`/${lang}/article/${article.id}`}>
+      <div className="flex gap-3 border-b border-gray-100 py-3 hover:bg-gray-50 transition cursor-pointer">
+        {article.featured_image && (
+          <div className="relative w-20 h-20 flex-shrink-0">
+            <Image
+              src={article.featured_image}
+              alt={getLocalizedTitle(article)}
+              fill
+              className="object-cover rounded"
+            />
+          </div>
+        )}
+        <div className="flex-1">
+          <h3 className={`font-semibold text-sm hover:text-red-600 transition line-clamp-2 ${lang === 'bn' ? 'font-bangla' : ''}`}>
+            {getLocalizedTitle(article)}
+          </h3>
+          <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
+            <span>{article.author || (lang === 'bn' ? 'স্টাফ' : 'Staff')}</span>
+            <span>•</span>
+            <span>{article.published_at ? formatBanglaDate(article.published_at, lang) : (lang === 'bn' ? 'তারিখ নেই' : 'No date')}</span>
+          </div>
         </div>
       </div>
-    </div>
-  </Link>
-))
+    </Link>
+  )
+})
 CompactArticleCard.displayName = 'CompactArticleCard'
 
 // --------------------------------------------------------------
 // Main Article Card (for hero and featured)
 // --------------------------------------------------------------
-const MainArticleCard = memo(({ article, lang, getLocalizedTitle, getLocalizedExcerpt, formatDate, size = 'large' }) => (
-  <Link href={`/${lang}/article/${article.id}`}>
-    <div className="group cursor-pointer">
-      {article.featured_image && (
-        <div className={`relative overflow-hidden rounded-md ${size === 'large' ? 'h-64 md:h-80' : 'h-48'}`}>
-          <Image
-            src={article.featured_image}
-            alt={getLocalizedTitle(article)}
-            fill
-            className="object-cover group-hover:scale-105 transition duration-500"
-          />
-        </div>
-      )}
-      <div className="mt-3">
-        <span className="text-red-600 text-xs uppercase font-bold tracking-wide">{article.category}</span>
-        <h2 className={`font-bold mt-1 hover:text-red-600 transition line-clamp-2 ${size === 'large' ? 'text-xl md:text-2xl' : 'text-lg'} ${lang === 'bn' ? 'font-bangla' : ''}`}>
-          {getLocalizedTitle(article)}
-        </h2>
-        {size === 'large' && (
-          <p className="text-gray-600 text-sm mt-2 line-clamp-2">{getLocalizedExcerpt(article)}</p>
+const MainArticleCard = memo(({ article, lang, getLocalizedTitle, getLocalizedExcerpt, formatDate, size = 'large', priority = false }) => {
+  if (!article) return null
+  return (
+    <Link href={`/${lang}/article/${article.id}`}>
+      <div className="group cursor-pointer">
+        {article.featured_image && (
+          <div className={`relative overflow-hidden rounded-md ${size === 'large' ? 'h-64 md:h-80' : 'h-48'}`}>
+            <Image
+              src={article.featured_image}
+              alt={getLocalizedTitle(article)}
+              fill
+              className="object-cover group-hover:scale-105 transition duration-500"
+              priority={priority}
+            />
+          </div>
         )}
-        <div className="flex items-center gap-3 text-xs text-gray-400 mt-2">
-          <span>{formatDate(article.published_at)}</span>
-          <span className="flex items-center gap-1"><Eye size={12} /> {article.views || 0}</span>
+        <div className="mt-3">
+          <span className="text-red-600 text-xs uppercase font-bold tracking-wide">{article.category}</span>
+          <h2 className={`font-bold mt-1 hover:text-red-600 transition line-clamp-2 ${size === 'large' ? 'text-xl md:text-2xl' : 'text-lg'} ${lang === 'bn' ? 'font-bangla' : ''}`}>
+            {getLocalizedTitle(article)}
+          </h2>
+          {size === 'large' && (
+            <p className="text-gray-600 text-sm mt-2 line-clamp-2">{getLocalizedExcerpt(article)}</p>
+          )}
+          <div className="flex items-center gap-3 text-xs text-gray-400 mt-2">
+            <span>{formatDate(article.published_at)}</span>
+            <span className="flex items-center gap-1"><Eye size={12} /> {article.views || 0}</span>
+          </div>
         </div>
       </div>
-    </div>
-  </Link>
-))
+    </Link>
+  )
+})
 MainArticleCard.displayName = 'MainArticleCard'
 
 // --------------------------------------------------------------
@@ -144,10 +154,26 @@ export default function Home({ params: { lang } }) {
   const [trendingArticles, setTrendingArticles] = useState([])
   const [categoryArticles, setCategoryArticles] = useState({})
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState(null)
+  const [currentDate, setCurrentDate] = useState('')
+
+  // Hydration-safe current date
+  useEffect(() => {
+    setCurrentDate(formatBanglaDate(new Date(), lang))
+  }, [lang])
+
+  // Initialize AdSense after mount
+  useEffect(() => {
+    initAdSense()
+  }, [])
 
   const fetchArticles = useCallback(async (bypassCache = false) => {
-    setLoading(true)
+    if (!bypassCache) {
+      setLoading(true)
+    } else {
+      setRefreshing(true)
+    }
     setError(null)
 
     const cacheKey = `home_articles_prothom_${lang}`
@@ -162,6 +188,7 @@ export default function Home({ params: { lang } }) {
           setTrendingArticles(data.trending)
           setCategoryArticles(data.categoryArticles)
           setLoading(false)
+          setRefreshing(false)
           return
         } catch (e) {}
       }
@@ -199,10 +226,10 @@ export default function Home({ params: { lang } }) {
 
       if (tErr) throw tErr
 
-      // Category specific: National, International, Sports, Entertainment
-      const categories = ['Politics', 'Technology', 'Business', 'Sports', 'Entertainment', 'Health', 'International']
+      // Category specific: only those we actually display
+      const categoriesToFetch = ['Politics', 'Business', 'Sports', 'Entertainment', 'International']
       const categoryData = {}
-      for (const cat of categories) {
+      for (const cat of categoriesToFetch) {
         const { data } = await supabase
           .from('articles')
           .select('*')
@@ -230,6 +257,7 @@ export default function Home({ params: { lang } }) {
       setError(err.message)
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }, [lang])
 
@@ -245,14 +273,51 @@ export default function Home({ params: { lang } }) {
   }, [lang])
 
   const getLocalizedTitle = useCallback((article) => {
+    if (!article) return ''
     if (lang === 'bn' && article.title_bn) return article.title_bn
     return article.title
   }, [lang])
 
   const getLocalizedExcerpt = useCallback((article) => {
+    if (!article) return ''
     if (lang === 'bn' && article.excerpt_bn) return article.excerpt_bn
     return article.excerpt
   }, [lang])
+
+  // Category name localization mapping
+  const getLocalizedCategoryName = (cat) => {
+    const names = {
+      Politics: lang === 'bn' ? 'রাজনীতি' : 'Politics',
+      Business: lang === 'bn' ? 'বাণিজ্য' : 'Business',
+      Sports: lang === 'bn' ? 'খেলাধুলা' : 'Sports',
+      Entertainment: lang === 'bn' ? 'বিনোদন' : 'Entertainment',
+      International: lang === 'bn' ? 'আন্তর্জাতিক' : 'International',
+    }
+    return names[cat] || cat
+  }
+
+  // Error UI
+  if (error && !loading) {
+    return (
+      <div className="bg-gray-50 min-h-screen">
+        <div className="container mx-auto px-4 py-16 text-center">
+          <div className="bg-red-50 text-red-600 p-6 rounded-lg max-w-md mx-auto">
+            <p className="text-lg font-semibold mb-2">
+              {lang === 'bn' ? 'খবর লোড করতে ব্যর্থ হয়েছে' : 'Failed to load news'}
+            </p>
+            <p className="text-sm mb-4">{error}</p>
+            <button
+              onClick={() => fetchArticles(true)}
+              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition flex items-center gap-2 mx-auto"
+            >
+              <RefreshCw size={16} />
+              {lang === 'bn' ? 'আবার চেষ্টা করুন' : 'Try again'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (loading) return <LoadingSpinner />
 
@@ -265,9 +330,14 @@ export default function Home({ params: { lang } }) {
       {/* Top Bar with Date */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-2 text-sm text-gray-500 flex justify-between items-center">
-          <span>{formatBanglaDate(new Date(), lang)}</span>
-          <button onClick={() => fetchArticles(true)} className="text-red-600 hover:text-red-700 flex items-center gap-1">
-            <RefreshCw size={14} /> {lang === 'bn' ? 'রিফ্রেশ' : 'Refresh'}
+          <span>{currentDate}</span>
+          <button
+            onClick={() => fetchArticles(true)}
+            disabled={refreshing}
+            className="text-red-600 hover:text-red-700 flex items-center gap-1 disabled:opacity-50"
+          >
+            {refreshing ? <RefreshCw size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+            {lang === 'bn' ? 'রিফ্রেশ' : 'Refresh'}
           </button>
         </div>
       </div>
@@ -295,6 +365,7 @@ export default function Home({ params: { lang } }) {
                 getLocalizedExcerpt={getLocalizedExcerpt}
                 formatDate={formatDate}
                 size="large"
+                priority={true}
               />
             </div>
             {/* Right side: two sub-hero articles */}
@@ -368,19 +439,21 @@ export default function Home({ params: { lang } }) {
         </div>
       </div>
 
-      {/* Category Sections (like Prothom Alo's "জাতীয়", "আন্তর্জাতিক", etc.) */}
-      {['Politics', 'Business', 'Sports', 'Entertainment', 'International'].map(cat => (
-        categoryArticles[cat] && categoryArticles[cat].length > 0 && (
+      {/* Category Sections (with localized names and empty fallback) */}
+      {['Politics', 'Business', 'Sports', 'Entertainment', 'International'].map(cat => {
+        const articles = categoryArticles[cat]
+        if (!articles || articles.length === 0) return null
+        return (
           <div key={cat} className="container mx-auto px-4 py-6 border-t border-gray-200">
-            <SectionHeader title={cat} seeAllLink={`/${lang}/category/${cat.toLowerCase()}`} lang={lang} />
+            <SectionHeader title={getLocalizedCategoryName(cat)} seeAllLink={`/${lang}/category/${cat.toLowerCase()}`} lang={lang} />
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
-              {categoryArticles[cat].slice(0, 4).map(article => (
+              {articles.slice(0, 4).map(article => (
                 <CompactArticleCard key={article.id} article={article} lang={lang} getLocalizedTitle={getLocalizedTitle} />
               ))}
             </div>
           </div>
         )
-      ))}
+      })}
 
       <AdSlot slot={AD_SLOT_FOOTER} format="horizontal" style={{ minHeight: '90px' }} />
 
