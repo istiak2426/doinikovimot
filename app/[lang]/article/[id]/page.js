@@ -192,7 +192,7 @@ export default function ArticlePage() {
             <img 
               src={article.featured_image} 
               alt={getLocalizedTitle()}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               onError={(e) => {
                 e.target.src = 'https://via.placeholder.com/1200x600?text=Image+Not+Found'
               }}
@@ -239,11 +239,11 @@ export default function ArticlePage() {
                 <Link href={`/${lang}/article/${related.id}`} key={related.id}>
                   <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition p-4 cursor-pointer">
                     {related.featured_image && (
-                      <div className="relative h-32 mb-3 rounded overflow-hidden">
+                      <div className="relative h-32 mb-3 rounded overflow-hidden bg-gray-100">
                         <img
                           src={related.featured_image}
                           alt={relatedTitle}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain"
                         />
                       </div>
                     )}
