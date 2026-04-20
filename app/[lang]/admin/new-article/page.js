@@ -3,14 +3,69 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import SimpleImageUploader from '@/components/ImageUploader'
 import LoadingSpinner from '@/components/LoadingSpinner'
+
+// Helper: Convert image file to WebP blob
+async function convertToWebP(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = (e) => {
+      const img = new Image()
+      img.src = e.target.result
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        canvas.width = img.width
+        canvas.height = img.height
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0)
+        // Convert to WebP with 80% quality
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(blob)
+          } else {
+            reject(new Error('WebP conversion failed'))
+          }
+        }, 'image/webp', 0.8)
+      }
+      img.onerror = reject
+    }
+    reader.onerror = reject
+  })
+}
+
+// Upload WebP blob to Supabase Storage under article-images bucket, temp-user folder
+async function uploadImage(file) {
+  const webpBlob = await convertToWebP(file)
+  // Create a unique filename
+  const fileName = `${Date.now()}-${file.name.split('.')[0].replace(/[^a-z0-9]/gi, '-')}.webp`
+  // Path: temp-user/filename.webp (no leading slash)
+  const filePath = `temp-user/${fileName}`
+
+  const { data, error } = await supabase.storage
+    .from('article-images')   // your bucket name
+    .upload(filePath, webpBlob, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: 'image/webp',
+    })
+
+  if (error) throw error
+
+  // Get public URL
+  const { data: { publicUrl } } = supabase.storage
+    .from('article-images')
+    .getPublicUrl(filePath)
+  
+  return publicUrl
+}
 
 export default function NewArticle({ params: { lang } }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     title_bn: '',
@@ -26,13 +81,24 @@ export default function NewArticle({ params: { lang } }) {
   
   const categories = ['Politics', 'Technology', 'Business', 'Sports', 'Entertainment', 'Health', 'International']
   
-  const handleImageUpload = (imageData) => {
-    if (imageData) {
-      setFormData({...formData, featured_image: imageData.url})
-      setSuccess('Image uploaded successfully!')
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    
+    setUploadingImage(true)
+    setError('')
+    
+    try {
+      const publicUrl = await uploadImage(file)
+      setFormData({ ...formData, featured_image: publicUrl })
+      setSuccess('Image uploaded and converted to WebP!')
       setTimeout(() => setSuccess(''), 3000)
-    } else {
-      setFormData({...formData, featured_image: ''})
+    } catch (err) {
+      console.error('Image upload error:', err)
+      setError(`Image upload failed: ${err.message}`)
+      setFormData({ ...formData, featured_image: '' })
+    } finally {
+      setUploadingImage(false)
     }
   }
   
@@ -230,15 +296,26 @@ export default function NewArticle({ params: { lang } }) {
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-2">Featured Image</label>
-          <SimpleImageUploader
-            onUploadComplete={handleImageUpload}
-            userId="temp-user"
+          <label className="block text-sm font-medium mb-2">Featured Image (converted to WebP)</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            disabled={uploadingImage}
+            className="w-full px-3 py-2 border rounded-md"
           />
+          {uploadingImage && (
+            <p className="text-xs text-blue-600 mt-1">Converting and uploading image...</p>
+          )}
           {formData.featured_image && (
-            <p className="text-xs text-green-600 mt-2">
-              ✓ Image uploaded successfully!
-            </p>
+            <div className="mt-2">
+              <img 
+                src={formData.featured_image} 
+                alt="Preview" 
+                className="h-32 w-auto object-cover rounded border" 
+              />
+              <p className="text-xs text-green-600 mt-1">✓ WebP image uploaded successfully!</p>
+            </div>
           )}
         </div>
         
@@ -246,7 +323,7 @@ export default function NewArticle({ params: { lang } }) {
           <button 
             type="submit" 
             className="bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700 disabled:opacity-50"
-            disabled={loading}
+            disabled={loading || uploadingImage}
           >
             {loading ? 'Creating...' : (lang === 'bn' ? 'প্রকাশ করুন' : 'Publish Article')}
           </button>
