@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
-// ========== Helper Functions ==========
+// ==================== HELPERS ====================
 
-// Convert image file to WebP blob
+// Convert image to WebP blob (for frontend delivery)
 async function convertToWebP(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -32,55 +32,47 @@ async function convertToWebP(file) {
   })
 }
 
-// Upload image (original + WebP), return WebP URL
+// Upload image: store original + WebP, return WebP URL
 async function uploadImage(file) {
   const timestamp = Date.now()
   const baseName = file.name.split('.')[0].replace(/[^a-z0-9]/gi, '-')
-  
-  // Upload original
-  const originalExt = file.name.split('.').pop()
-  const originalPath = `temp-user/original/${timestamp}-${baseName}.${originalExt}`
-  const { error: originalError } = await supabase.storage
+  const ext = file.name.split('.').pop()
+
+  // Original
+  const originalPath = `temp-user/original/${timestamp}-${baseName}.${ext}`
+  const { error: err1 } = await supabase.storage
     .from('article-images')
     .upload(originalPath, file, { cacheControl: '3600', contentType: file.type })
-  if (originalError) throw originalError
+  if (err1) throw err1
 
-  // Upload WebP
+  // WebP
   const webpBlob = await convertToWebP(file)
   const webpPath = `temp-user/webp/${timestamp}-${baseName}.webp`
-  const { error: webpError } = await supabase.storage
+  const { error: err2 } = await supabase.storage
     .from('article-images')
     .upload(webpPath, webpBlob, { cacheControl: '3600', contentType: 'image/webp' })
-  if (webpError) throw webpError
+  if (err2) throw err2
 
-  // Return WebP public URL
   const { data: { publicUrl } } = supabase.storage
     .from('article-images')
     .getPublicUrl(webpPath)
   return publicUrl
 }
 
-// Upload video (original only, no conversion) - with size limit
+// Upload video (original, max 50MB)
 async function uploadVideo(file) {
-  const MAX_VIDEO_SIZE_MB = 50
-  const MAX_VIDEO_SIZE_BYTES = MAX_VIDEO_SIZE_MB * 1024 * 1024
-
-  if (file.size > MAX_VIDEO_SIZE_BYTES) {
-    throw new Error(`Video file too large. Max size is ${MAX_VIDEO_SIZE_MB}MB.`)
+  const MAX_MB = 50
+  if (file.size > MAX_MB * 1024 * 1024) {
+    throw new Error(`Video too large. Max ${MAX_MB}MB.`)
   }
-
   const timestamp = Date.now()
   const baseName = file.name.split('.')[0].replace(/[^a-z0-9]/gi, '-')
   const ext = file.name.split('.').pop()
-  const fileName = `${timestamp}-${baseName}.${ext}`
-  const filePath = `temp-user/videos/${fileName}`
+  const filePath = `temp-user/videos/${timestamp}-${baseName}.${ext}`
 
   const { error } = await supabase.storage
     .from('article-images')
-    .upload(filePath, file, {
-      cacheControl: '3600',
-      contentType: file.type,
-    })
+    .upload(filePath, file, { cacheControl: '3600', contentType: file.type })
   if (error) throw error
 
   const { data: { publicUrl } } = supabase.storage
@@ -89,47 +81,38 @@ async function uploadVideo(file) {
   return publicUrl
 }
 
-// External video embed helpers
-function youtubeUrlToEmbed(url) {
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
-  const match = url.match(regExp)
+// External video embed generators
+function youtubeEmbed(url) {
+  const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/)
   if (match && match[2].length === 11) {
-    return `<iframe width="560" height="315" src="https://www.youtube.com/embed/${match[2]}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="my-4"></iframe>`
+    return `<iframe width="560" height="315" src="https://www.youtube.com/embed/${match[2]}" frameborder="0" allowfullscreen class="my-4"></iframe>`
   }
   return null
 }
 
-function vimeoUrlToEmbed(url) {
-  const regExp = /vimeo\.com\/(\d+)/
-  const match = url.match(regExp)
+function vimeoEmbed(url) {
+  const match = url.match(/vimeo\.com\/(\d+)/)
   if (match && match[1]) {
     return `<iframe src="https://player.vimeo.com/video/${match[1]}" width="560" height="315" frameborder="0" allowfullscreen class="my-4"></iframe>`
   }
   return null
 }
 
-async function facebookUrlToEmbed(url) {
-  try {
-    // Facebook embed (works for public videos)
-    return `<iframe src="https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=0&width=560" width="560" height="315" frameborder="0" allowfullscreen class="my-4"></iframe>`
-  } catch (error) {
-    console.error('Facebook embed error:', error)
-    return null
-  }
+function facebookEmbed(url) {
+  return `<iframe src="https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=0&width=560" width="560" height="315" frameborder="0" allowfullscreen class="my-4"></iframe>`
 }
 
-async function tiktokUrlToEmbed(url) {
+async function tiktokEmbed(url) {
   try {
-    const response = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`)
-    const data = await response.json()
+    const res = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`)
+    const data = await res.json()
     return data.html || null
-  } catch (error) {
-    console.error('TikTok embed error:', error)
+  } catch {
     return null
   }
 }
 
-// ========== Main Component ==========
+// ==================== MAIN COMPONENT ====================
 
 export default function NewArticle({ params: { lang } }) {
   const router = useRouter()
@@ -137,9 +120,8 @@ export default function NewArticle({ params: { lang } }) {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [uploadingImage, setUploadingImage] = useState(false)
-  const [uploadingInlineImage, setUploadingInlineImage] = useState(false)
   const [uploadingVideo, setUploadingVideo] = useState(false)
-  
+
   const [formData, setFormData] = useState({
     title: '',
     title_bn: '',
@@ -152,227 +134,188 @@ export default function NewArticle({ params: { lang } }) {
     featured_image: '',
     status: 'published'
   })
-  
-  const contentTextareaRef = useRef(null)
-  const contentBnTextareaRef = useRef(null)
-  
+
+  const contentRef = useRef(null)
+  const contentBnRef = useRef(null)
+
   const categories = ['Politics', 'Technology', 'Business', 'Sports', 'Entertainment', 'Health', 'International']
-  
-  // Insert image (file upload)
-  const insertImageIntoContent = async (fieldName) => {
+
+  // Insert media at cursor position
+  const insertAtCursor = (field, html) => {
+    const textarea = field === 'content' ? contentRef.current : contentBnRef.current
+    if (textarea) {
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const current = formData[field]
+      const newContent = current.substring(0, start) + html + current.substring(end)
+      setFormData({ ...formData, [field]: newContent })
+      setTimeout(() => {
+        textarea.focus()
+        textarea.setSelectionRange(start + html.length, start + html.length)
+      }, 10)
+    } else {
+      // fallback: append
+      setFormData({ ...formData, [field]: formData[field] + '\n\n' + html + '\n\n' })
+    }
+  }
+
+  // Image upload (inline)
+  const handleInlineImage = async (field) => {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'image/*'
     input.onchange = async (e) => {
       const file = e.target.files[0]
       if (!file) return
-      
-      setUploadingInlineImage(true)
+      setUploadingImage(true)
       try {
-        const publicUrl = await uploadImage(file)
-        const imgTag = `<img src="${publicUrl}" alt="Image" class="my-4 max-w-full h-auto" />`
-        
-        const textarea = fieldName === 'content' ? contentTextareaRef.current : contentBnTextareaRef.current
-        if (textarea) {
-          const start = textarea.selectionStart
-          const end = textarea.selectionEnd
-          const currentContent = formData[fieldName]
-          const newContent = currentContent.substring(0, start) + imgTag + currentContent.substring(end)
-          setFormData({ ...formData, [fieldName]: newContent })
-          setTimeout(() => {
-            textarea.focus()
-            textarea.setSelectionRange(start + imgTag.length, start + imgTag.length)
-          }, 10)
-        } else {
-          setFormData({
-            ...formData,
-            [fieldName]: formData[fieldName] + '\n\n' + imgTag + '\n\n'
-          })
-        }
+        const url = await uploadImage(file)
+        const imgTag = `<img src="${url}" alt="Image" class="my-4 max-w-full h-auto" />`
+        insertAtCursor(field, imgTag)
         setSuccess('Image inserted!')
         setTimeout(() => setSuccess(''), 2000)
       } catch (err) {
-        setError(`Image upload failed: ${err.message}`)
+        setError(`Image failed: ${err.message}`)
       } finally {
-        setUploadingInlineImage(false)
+        setUploadingImage(false)
       }
     }
     input.click()
   }
-  
-  // Insert video file (upload)
-  const insertVideoFile = async (fieldName) => {
+
+  // Video file upload
+  const handleInlineVideo = async (field) => {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'video/*'
     input.onchange = async (e) => {
       const file = e.target.files[0]
       if (!file) return
-      
       setUploadingVideo(true)
       try {
-        const publicUrl = await uploadVideo(file)
-        const videoTag = `<video controls width="100%" class="my-4"><source src="${publicUrl}" type="${file.type}">Your browser does not support the video tag.</video>`
-        
-        const textarea = fieldName === 'content' ? contentTextareaRef.current : contentBnTextareaRef.current
-        if (textarea) {
-          const start = textarea.selectionStart
-          const end = textarea.selectionEnd
-          const currentContent = formData[fieldName]
-          const newContent = currentContent.substring(0, start) + videoTag + currentContent.substring(end)
-          setFormData({ ...formData, [fieldName]: newContent })
-          setTimeout(() => {
-            textarea.focus()
-            textarea.setSelectionRange(start + videoTag.length, start + videoTag.length)
-          }, 10)
-        } else {
-          setFormData({
-            ...formData,
-            [fieldName]: formData[fieldName] + '\n\n' + videoTag + '\n\n'
-          })
-        }
-        setSuccess('Video uploaded and inserted!')
+        const url = await uploadVideo(file)
+        const videoTag = `<video controls width="100%" class="my-4"><source src="${url}" type="${file.type}">Your browser does not support video.</video>`
+        insertAtCursor(field, videoTag)
+        setSuccess('Video uploaded & inserted!')
         setTimeout(() => setSuccess(''), 2000)
       } catch (err) {
-        setError(`Video upload failed: ${err.message}`)
+        setError(`Video failed: ${err.message}`)
       } finally {
         setUploadingVideo(false)
       }
     }
     input.click()
   }
-  
-  // Insert external video (link)
-  const insertExternalVideo = async (fieldName) => {
-    const videoUrl = prompt('Enter YouTube URL, Vimeo URL, Facebook Reel URL, TikTok URL, or paste full iframe embed code:')
-    if (!videoUrl) return
-    
-    let embedCode = ''
-    
-    const youtubeEmbed = youtubeUrlToEmbed(videoUrl)
-    if (youtubeEmbed) embedCode = youtubeEmbed
-    else if (vimeoUrlToEmbed(videoUrl)) embedCode = vimeoUrlToEmbed(videoUrl)
-    else if (videoUrl.includes('facebook.com') || videoUrl.includes('fb.com')) embedCode = await facebookUrlToEmbed(videoUrl)
-    else if (videoUrl.includes('tiktok.com')) embedCode = await tiktokUrlToEmbed(videoUrl)
-    else if (videoUrl.trim().startsWith('<iframe')) embedCode = videoUrl
-    else embedCode = `<video controls width="100%" class="my-4"><source src="${videoUrl}" type="video/mp4">Your browser does not support the video tag.</video>`
-    
-    if (embedCode) {
-      const textarea = fieldName === 'content' ? contentTextareaRef.current : contentBnTextareaRef.current
-      if (textarea) {
-        const start = textarea.selectionStart
-        const end = textarea.selectionEnd
-        const currentContent = formData[fieldName]
-        const newContent = currentContent.substring(0, start) + embedCode + currentContent.substring(end)
-        setFormData({ ...formData, [fieldName]: newContent })
-        setTimeout(() => {
-          textarea.focus()
-          textarea.setSelectionRange(start + embedCode.length, start + embedCode.length)
-        }, 10)
-      } else {
-        setFormData({
-          ...formData,
-          [fieldName]: formData[fieldName] + '\n\n' + embedCode + '\n\n'
-        })
-      }
+
+  // External video link (YouTube, TikTok, FB, Vimeo, or raw iframe)
+  const handleExternalVideo = async (field) => {
+    const url = prompt('Enter video URL (YouTube, TikTok, Facebook Reel, Vimeo) or paste iframe code:')
+    if (!url) return
+
+    let embed = null
+    if (url.includes('youtube.com') || url.includes('youtu.be')) embed = youtubeEmbed(url)
+    else if (url.includes('vimeo.com')) embed = vimeoEmbed(url)
+    else if (url.includes('facebook.com') || url.includes('fb.com')) embed = facebookEmbed(url)
+    else if (url.includes('tiktok.com')) embed = await tiktokEmbed(url)
+    else if (url.trim().startsWith('<iframe')) embed = url
+    else embed = `<video controls width="100%" class="my-4"><source src="${url}" type="video/mp4">Your browser does not support video.</video>`
+
+    if (embed) {
+      insertAtCursor(field, embed)
       setSuccess('Video embed inserted!')
       setTimeout(() => setSuccess(''), 2000)
     } else {
-      setError('Could not generate embed code for the provided URL.')
+      setError('Could not generate embed code.')
       setTimeout(() => setError(''), 3000)
     }
   }
-  
-  // Featured image upload
-  const handleFeaturedImageUpload = async (e) => {
+
+  // Featured image upload (separate)
+  const handleFeaturedImage = async (e) => {
     const file = e.target.files[0]
     if (!file) return
-    
     setUploadingImage(true)
     try {
-      const publicUrl = await uploadImage(file)
-      setFormData({ ...formData, featured_image: publicUrl })
-      setSuccess('Featured image uploaded!')
-      setTimeout(() => setSuccess(''), 3000)
+      const url = await uploadImage(file)
+      setFormData({ ...formData, featured_image: url })
+      setSuccess('Featured image ready!')
+      setTimeout(() => setSuccess(''), 2000)
     } catch (err) {
-      setError(`Featured image upload failed: ${err.message}`)
+      setError(`Featured image failed: ${err.message}`)
     } finally {
       setUploadingImage(false)
     }
   }
-  
+
+  // Submit article
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError('')
     setSuccess('')
-    
+
     if (!formData.title || !formData.content || !formData.category || !formData.author) {
-      setError('Please fill in all required fields (Title, Content, Category, Author)')
+      setError('Title, Content, Category and Author are required.')
       setLoading(false)
       return
     }
-    
+
     const slug = formData.title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '')
-    
+
+    const article = {
+      title: formData.title,
+      title_bn: formData.title_bn || null,
+      slug,
+      excerpt: formData.excerpt || null,
+      excerpt_bn: formData.excerpt_bn || null,
+      content: formData.content,
+      content_bn: formData.content_bn || null,
+      category: formData.category,
+      author: formData.author,
+      featured_image: formData.featured_image || null,
+      status: formData.status,
+      published_at: new Date().toISOString(),
+      views: 0,
+      is_featured: false
+    }
+
     try {
-      const articleData = {
-        title: formData.title,
-        title_bn: formData.title_bn || null,
-        slug: slug,
-        excerpt: formData.excerpt || null,
-        excerpt_bn: formData.excerpt_bn || null,
-        content: formData.content,
-        content_bn: formData.content_bn || null,
-        category: formData.category,
-        author: formData.author,
-        featured_image: formData.featured_image || null,
-        status: formData.status,
-        published_at: new Date().toISOString(),
-        views: 0,
-        is_featured: false
-      }
-      
-      const { error: insertError } = await supabase
-        .from('articles')
-        .insert([articleData])
-      
-      if (insertError) throw insertError
-      
-      setSuccess('Article created successfully! Redirecting...')
+      const { error } = await supabase.from('articles').insert([article])
+      if (error) throw error
+      setSuccess('Article published! Redirecting...')
       setTimeout(() => router.push(`/${lang}/admin`), 2000)
     } catch (err) {
-      setError(`Error: ${err.message}`)
+      setError(`Database error: ${err.message}`)
       setLoading(false)
     }
   }
-  
+
   if (loading) return <LoadingSpinner />
-  
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-6">
         {lang === 'bn' ? 'নতুন আর্টিকেল' : 'Create New Article'}
       </h1>
-      
-      {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"><strong>Error:</strong> {error}</div>}
-      {success && <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4"><strong>Success!</strong> {success}</div>}
-      
+
+      {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">❌ {error}</div>}
+      {success && <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">✅ {success}</div>}
+
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Title */}
+        {/* Titles */}
         <div>
-          <label className="block text-sm font-medium mb-2">Title (English) <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium mb-2">Title (English) *</label>
           <input type="text" required value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full px-3 py-2 border rounded-md" />
         </div>
         <div>
           <label className="block text-sm font-medium mb-2">Title (Bangla)</label>
           <input type="text" value={formData.title_bn} onChange={(e) => setFormData({...formData, title_bn: e.target.value})} className="w-full px-3 py-2 border rounded-md font-bangla" />
         </div>
-        
-        {/* Excerpt */}
+
+        {/* Excerpts */}
         <div>
           <label className="block text-sm font-medium mb-2">Excerpt (English)</label>
           <textarea rows="2" value={formData.excerpt} onChange={(e) => setFormData({...formData, excerpt: e.target.value})} className="w-full px-3 py-2 border rounded-md" />
@@ -381,92 +324,92 @@ export default function NewArticle({ params: { lang } }) {
           <label className="block text-sm font-medium mb-2">Excerpt (Bangla)</label>
           <textarea rows="2" value={formData.excerpt_bn} onChange={(e) => setFormData({...formData, excerpt_bn: e.target.value})} className="w-full px-3 py-2 border rounded-md font-bangla" />
         </div>
-        
-        {/* Content (English) */}
+
+        {/* Content (English) with media buttons */}
         <div>
           <div className="flex flex-wrap gap-2 justify-between items-center mb-2">
-            <label className="block text-sm font-medium">Content (English) <span className="text-red-500">*</span></label>
+            <label className="text-sm font-medium">Content (English) *</label>
             <div className="space-x-2">
-              <button type="button" onClick={() => insertImageIntoContent('content')} disabled={uploadingInlineImage} className="bg-blue-600 text-white px-3 py-1 text-sm rounded hover:bg-blue-700 disabled:opacity-50">
-                {uploadingInlineImage ? 'Uploading...' : '📷 Upload Image'}
+              <button type="button" onClick={() => handleInlineImage('content')} disabled={uploadingImage} className="bg-blue-600 text-white px-3 py-1 text-sm rounded hover:bg-blue-700 disabled:opacity-50">
+                📷 Upload Image
               </button>
-              <button type="button" onClick={() => insertVideoFile('content')} disabled={uploadingVideo} className="bg-purple-600 text-white px-3 py-1 text-sm rounded hover:bg-purple-700 disabled:opacity-50">
-                {uploadingVideo ? 'Uploading...' : '🎬 Upload Video'}
+              <button type="button" onClick={() => handleInlineVideo('content')} disabled={uploadingVideo} className="bg-purple-600 text-white px-3 py-1 text-sm rounded hover:bg-purple-700 disabled:opacity-50">
+                🎬 Upload Video
               </button>
-              <button type="button" onClick={() => insertExternalVideo('content')} className="bg-green-600 text-white px-3 py-1 text-sm rounded hover:bg-green-700">
+              <button type="button" onClick={() => handleExternalVideo('content')} className="bg-green-600 text-white px-3 py-1 text-sm rounded hover:bg-green-700">
                 🔗 External Video Link
               </button>
             </div>
           </div>
           <textarea
-            ref={contentTextareaRef}
-            rows="10"
+            ref={contentRef}
+            rows="12"
             required
             value={formData.content}
             onChange={(e) => setFormData({...formData, content: e.target.value})}
             className="w-full px-3 py-2 border rounded-md font-mono"
-            placeholder="Write your article here. Use buttons to insert images or videos at cursor position."
+            placeholder="Write your article here. Position your cursor and click one of the buttons above to insert images or videos at that exact spot."
           />
-          <p className="text-xs text-gray-500 mt-1">Supports HTML, images, uploaded videos (max 50MB), YouTube, TikTok, Facebook Reels, Vimeo, and iframe embed codes.</p>
+          <p className="text-xs text-gray-500 mt-1">HTML supported. You can insert as many images/videos as you like, anywhere in the text.</p>
         </div>
-        
-        {/* Content (Bangla) */}
+
+        {/* Content (Bangla) with same buttons */}
         <div>
           <div className="flex flex-wrap gap-2 justify-between items-center mb-2">
-            <label className="block text-sm font-medium">Content (Bangla)</label>
+            <label className="text-sm font-medium">Content (Bangla)</label>
             <div className="space-x-2">
-              <button type="button" onClick={() => insertImageIntoContent('content_bn')} disabled={uploadingInlineImage} className="bg-blue-600 text-white px-3 py-1 text-sm rounded hover:bg-blue-700 disabled:opacity-50">
+              <button type="button" onClick={() => handleInlineImage('content_bn')} disabled={uploadingImage} className="bg-blue-600 text-white px-3 py-1 text-sm rounded hover:bg-blue-700 disabled:opacity-50">
                 📷 Upload Image
               </button>
-              <button type="button" onClick={() => insertVideoFile('content_bn')} disabled={uploadingVideo} className="bg-purple-600 text-white px-3 py-1 text-sm rounded hover:bg-purple-700 disabled:opacity-50">
+              <button type="button" onClick={() => handleInlineVideo('content_bn')} disabled={uploadingVideo} className="bg-purple-600 text-white px-3 py-1 text-sm rounded hover:bg-purple-700 disabled:opacity-50">
                 🎬 Upload Video
               </button>
-              <button type="button" onClick={() => insertExternalVideo('content_bn')} className="bg-green-600 text-white px-3 py-1 text-sm rounded hover:bg-green-700">
+              <button type="button" onClick={() => handleExternalVideo('content_bn')} className="bg-green-600 text-white px-3 py-1 text-sm rounded hover:bg-green-700">
                 🔗 External Video Link
               </button>
             </div>
           </div>
           <textarea
-            ref={contentBnTextareaRef}
-            rows="8"
+            ref={contentBnRef}
+            rows="10"
             value={formData.content_bn}
             onChange={(e) => setFormData({...formData, content_bn: e.target.value})}
             className="w-full px-3 py-2 border rounded-md font-bangla"
-            placeholder="বাংলা কন্টেন্ট"
+            placeholder="বাংলা কন্টেন্ট (একইভাবে ছবি ও ভিডিও বসাতে পারেন)"
           />
         </div>
-        
+
         {/* Category & Author */}
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Category <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium mb-2">Category *</label>
             <select required value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full px-3 py-2 border rounded-md">
-              <option value="">Select a category</option>
+              <option value="">Select</option>
               {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Author <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium mb-2">Author *</label>
             <input type="text" required value={formData.author} onChange={(e) => setFormData({...formData, author: e.target.value})} className="w-full px-3 py-2 border rounded-md" />
           </div>
         </div>
-        
+
         {/* Featured Image */}
         <div>
-          <label className="block text-sm font-medium mb-2">Featured Image (Hero / Card preview)</label>
-          <input type="file" accept="image/*" onChange={handleFeaturedImageUpload} disabled={uploadingImage} className="w-full px-3 py-2 border rounded-md" />
-          {uploadingImage && <p className="text-xs text-blue-600 mt-1">Uploading featured image...</p>}
+          <label className="block text-sm font-medium mb-2">Featured Image (for card / hero)</label>
+          <input type="file" accept="image/*" onChange={handleFeaturedImage} disabled={uploadingImage} className="w-full px-3 py-2 border rounded-md" />
+          {uploadingImage && <p className="text-xs text-blue-600 mt-1">Uploading...</p>}
           {formData.featured_image && (
             <div className="mt-2">
-              <img src={formData.featured_image} alt="Featured preview" className="h-32 w-auto object-cover rounded border" />
-              <p className="text-xs text-green-600 mt-1">✓ Featured image ready</p>
+              <img src={formData.featured_image} alt="Featured" className="h-32 w-auto object-cover rounded border" />
+              <p className="text-xs text-green-600 mt-1">✓ Featured image ready (WebP)</p>
             </div>
           )}
         </div>
-        
+
         <div className="flex gap-4">
-          <button type="submit" className="bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700 disabled:opacity-50" disabled={loading || uploadingImage || uploadingInlineImage || uploadingVideo}>
-            {loading ? 'Creating...' : (lang === 'bn' ? 'প্রকাশ করুন' : 'Publish Article')}
+          <button type="submit" className="bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700 disabled:opacity-50" disabled={loading || uploadingImage || uploadingVideo}>
+            {loading ? 'Publishing...' : (lang === 'bn' ? 'প্রকাশ করুন' : 'Publish Article')}
           </button>
           <button type="button" onClick={() => router.back()} className="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600">
             Cancel
