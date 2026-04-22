@@ -332,7 +332,7 @@ export default function Home({ params: { lang } }) {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      {/* MAIN CONTAINER - NO TOP PADDING (pt-0) */}
+      {/* MAIN CONTAINER - NO TOP PADDING */}
       <div className="container mx-auto px-4 pt-0 pb-6">
         {/* Hero + Trending Sidebar */}
         <div className="grid lg:grid-cols-3 gap-8">
@@ -365,9 +365,9 @@ export default function Home({ params: { lang } }) {
             )}
           </div>
 
-          {/* Right Column: Trending Sidebar */}
-          <div className="space-y-6">
-            <div className="bg-white p-4 rounded-xl shadow-sm">
+          {/* Right Column: Trending Sidebar - FIXED LEFT GAP */}
+          <div className="space-y-6 ml-0 pl-0">
+            <div className="bg-white p-4 rounded-xl shadow-sm mx-0">
               <div className="flex items-center gap-2 border-b pb-2 mb-3">
                 <TrendingUp size={18} className="text-red-600" />
                 <h3 className="font-bold text-lg">
