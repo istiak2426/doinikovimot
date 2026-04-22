@@ -3,8 +3,8 @@
 import { useState, useEffect, memo, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Eye, RefreshCw, ChevronRight, TrendingUp, Clock } from 'lucide-react'
-import { format } from 'date-fns'
+import { Eye, RefreshCw, ChevronRight, Clock, TrendingUp } from 'lucide-react'
+import { formatDistanceToNow } from 'date-fns'
 import { bn } from 'date-fns/locale'
 import { supabase } from '@/lib/supabase'
 import LoadingSpinner from '@/components/LoadingSpinner'
@@ -45,17 +45,36 @@ const AdSlot = ({ slot, style = {} }) => {
 // --------------------------------------------------------------
 // Helpers
 // --------------------------------------------------------------
-const formatDateLocalized = (date, lang) => {
+const getRelativeTime = (date, lang) => {
   if (!date) return ''
-  const d = new Date(date)
-  if (lang === 'bn') {
-    return d.toLocaleDateString('bn-BD', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
+  try {
+    const d = new Date(date)
+    if (isNaN(d.getTime())) return ''
+    const locale = lang === 'bn' ? bn : undefined
+    // For Bengali, customize suffix to match typical news style
+    if (lang === 'bn') {
+      const result = formatDistanceToNow(d, { addSuffix: true, locale: bn })
+      // Replace "প্রায়" if needed, but keep as is
+      return result
+    }
+    return formatDistanceToNow(d, { addSuffix: true, locale: undefined })
+  } catch (err) {
+    return ''
   }
-  return format(d, 'PP', { locale: bn })
+}
+
+// Map category to Bangla for display
+const getCategoryBangla = (category) => {
+  const map = {
+    Politics: 'রাজনীতি',
+    Business: 'বাণিজ্য',
+    Sports: 'খেলা',
+    Entertainment: 'বিনোদন',
+    Technology: 'প্রযুক্তি',
+    International: 'আন্তর্জাতিক',
+    National: 'জাতীয়',
+  }
+  return map[category] || category
 }
 
 // --------------------------------------------------------------
@@ -63,7 +82,7 @@ const formatDateLocalized = (date, lang) => {
 // --------------------------------------------------------------
 const HeroSkeleton = () => (
   <div className="animate-pulse">
-    <div className="h-80 bg-gray-200 rounded-lg"></div>
+    <div className="h-80 bg-gray-200 rounded"></div>
     <div className="mt-3 space-y-2">
       <div className="h-4 bg-gray-200 w-1/4 rounded"></div>
       <div className="h-6 bg-gray-200 w-3/4 rounded"></div>
@@ -73,11 +92,25 @@ const HeroSkeleton = () => (
 )
 
 const ArticleCardSkeleton = () => (
-  <div className="animate-pulse flex gap-3">
+  <div className="animate-pulse flex gap-3 border-b border-gray-100 pb-3">
     <div className="w-20 h-20 bg-gray-200 rounded"></div>
     <div className="flex-1 space-y-2">
       <div className="h-4 bg-gray-200 w-3/4 rounded"></div>
       <div className="h-3 bg-gray-200 w-1/2 rounded"></div>
+    </div>
+  </div>
+)
+
+const SidebarSkeleton = () => (
+  <div className="bg-white p-4 border border-gray-200">
+    <div className="h-6 bg-gray-200 w-1/2 mb-4 rounded"></div>
+    <div className="space-y-3">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div key={i} className="border-b border-gray-100 pb-2">
+          <div className="h-4 bg-gray-200 w-full rounded"></div>
+          <div className="h-3 bg-gray-200 w-20 mt-2 rounded"></div>
+        </div>
+      ))}
     </div>
   </div>
 )
@@ -102,18 +135,21 @@ const CompactArticleCard = memo(({ article, lang, getLocalizedTitle }) => {
           </div>
         )}
         <div className="flex-1">
+          {article.category && (
+            <span className="text-red-700 text-xs font-semibold uppercase tracking-wide">
+              {lang === 'bn' ? getCategoryBangla(article.category) : article.category}
+            </span>
+          )}
           <h3
-            className={`font-semibold text-sm line-clamp-2 hover:text-red-600 ${
+            className={`font-semibold text-sm line-clamp-2 mt-1 hover:text-red-700 ${
               lang === 'bn' ? 'font-bangla' : ''
             }`}
           >
             {getLocalizedTitle(article)}
           </h3>
-          <div className="text-xs text-gray-400 mt-1 flex items-center gap-2">
+          <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
             <Clock size={12} />
-            {article.published_at
-              ? formatDateLocalized(article.published_at, lang)
-              : 'No date'}
+            {getRelativeTime(article.published_at, lang)}
           </div>
         </div>
       </div>
@@ -123,14 +159,7 @@ const CompactArticleCard = memo(({ article, lang, getLocalizedTitle }) => {
 CompactArticleCard.displayName = 'CompactArticleCard'
 
 const MainArticleCard = memo(
-  ({
-    article,
-    lang,
-    getLocalizedTitle,
-    getLocalizedExcerpt,
-    formatDate,
-    size = 'large',
-  }) => {
+  ({ article, lang, getLocalizedTitle, getLocalizedExcerpt, size = 'large' }) => {
     if (!article) return null
     const isLarge = size === 'large'
     return (
@@ -138,9 +167,9 @@ const MainArticleCard = memo(
         <div className="group cursor-pointer">
           {article.featured_image && (
             <div
-              className={`relative overflow-hidden rounded bg-gray-100 ${
+              className={`relative overflow-hidden bg-gray-100 ${
                 isLarge ? 'h-80 md:h-96' : 'h-48'
-              }`}
+              } rounded`}
             >
               <Image
                 src={article.featured_image}
@@ -153,24 +182,26 @@ const MainArticleCard = memo(
           )}
           <div className="mt-3">
             {article.category && (
-              <span className="text-red-600 text-xs font-bold uppercase tracking-wide">
-                {article.category}
+              <span className="text-red-700 text-xs font-semibold uppercase tracking-wide">
+                {lang === 'bn' ? getCategoryBangla(article.category) : article.category}
               </span>
             )}
             <h2
-              className={`font-bold mt-1 line-clamp-2 group-hover:text-red-600 ${
-                isLarge ? 'text-2xl md:text-3xl' : 'text-lg'
+              className={`font-bold mt-1 line-clamp-2 group-hover:text-red-700 ${
+                isLarge ? 'text-2xl md:text-3xl font-serif' : 'text-lg'
               }`}
             >
               {getLocalizedTitle(article)}
             </h2>
             {isLarge && (
-              <p className="text-gray-600 text-sm mt-2 line-clamp-3">
+              <p className="text-gray-700 text-sm mt-2 line-clamp-3">
                 {getLocalizedExcerpt(article)}
               </p>
             )}
-            <div className="text-xs text-gray-400 mt-2 flex gap-3">
-              <span>{formatDate(article.published_at)}</span>
+            <div className="text-xs text-gray-500 mt-2 flex gap-3">
+              <span className="flex items-center gap-1">
+                <Clock size={12} /> {getRelativeTime(article.published_at, lang)}
+              </span>
               <span className="flex items-center gap-1">
                 <Eye size={12} /> {article.views?.toLocaleString() || 0}
               </span>
@@ -184,12 +215,12 @@ const MainArticleCard = memo(
 MainArticleCard.displayName = 'MainArticleCard'
 
 const SectionHeader = ({ title, seeAllLink, lang }) => (
-  <div className="flex justify-between items-center border-b-2 border-red-600 pb-2 mb-4">
-    <h2 className="text-xl md:text-2xl font-bold">{title}</h2>
+  <div className="flex justify-between items-center border-b-2 border-red-700 pb-2 mb-4">
+    <h2 className="text-xl md:text-2xl font-bold font-serif">{title}</h2>
     {seeAllLink && (
       <Link
         href={seeAllLink}
-        className="text-red-600 text-sm flex items-center gap-1 hover:underline"
+        className="text-red-700 text-sm flex items-center gap-1 hover:underline"
       >
         {lang === 'bn' ? 'সব দেখুন' : 'See all'} <ChevronRight size={16} />
       </Link>
@@ -203,7 +234,6 @@ const SectionHeader = ({ title, seeAllLink, lang }) => (
 export default function Home({ params: { lang } }) {
   const [featuredArticles, setFeaturedArticles] = useState([])
   const [latestArticles, setLatestArticles] = useState([])
-  const [trendingArticles, setTrendingArticles] = useState([])
   const [categoryArticles, setCategoryArticles] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -213,7 +243,7 @@ export default function Home({ params: { lang } }) {
     setError(null)
 
     try {
-      const [featuredRes, latestRes, trendingRes] = await Promise.all([
+      const [featuredRes, latestRes] = await Promise.all([
         supabase
           .from('articles')
           .select('*')
@@ -226,22 +256,14 @@ export default function Home({ params: { lang } }) {
           .eq('status', 'published')
           .order('published_at', { ascending: false })
           .limit(12),
-        supabase
-          .from('articles')
-          .select('*')
-          .eq('status', 'published')
-          .order('views', { ascending: false })
-          .limit(6),
       ])
 
-      if (featuredRes.error || latestRes.error || trendingRes.error)
-        throw new Error('Failed to fetch articles')
+      if (featuredRes.error || latestRes.error) throw new Error('Failed to fetch articles')
 
       setFeaturedArticles(featuredRes.data || [])
       setLatestArticles(latestRes.data || [])
-      setTrendingArticles(trendingRes.data || [])
 
-      const categories = ['Politics', 'Business', 'Sports', 'Entertainment', 'Technology']
+      const categories = ['Politics', 'Business', 'Sports', 'Entertainment', 'Technology', 'International']
       const catData = {}
 
       await Promise.all(
@@ -269,11 +291,6 @@ export default function Home({ params: { lang } }) {
     fetchArticles()
   }, [fetchArticles])
 
-  const formatDate = (date) => {
-    if (!date) return ''
-    return format(new Date(date), 'PP', { locale: lang === 'bn' ? bn : undefined })
-  }
-
   const getLocalizedTitle = (a) =>
     lang === 'bn' && a.title_bn ? a.title_bn : a.title
   const getLocalizedExcerpt = (a) =>
@@ -281,6 +298,9 @@ export default function Home({ params: { lang } }) {
 
   const heroArticle = featuredArticles[0]
   const subHeroArticles = featuredArticles.slice(1, 4)
+
+  // Sidebar latest (first 6 of latestArticles)
+  const sidebarLatest = latestArticles.slice(0, 6)
 
   if (loading) {
     return (
@@ -290,11 +310,8 @@ export default function Home({ params: { lang } }) {
             <div className="lg:col-span-2">
               <HeroSkeleton />
             </div>
-            <div className="hidden lg:block space-y-4">
-              <div className="h-6 bg-gray-200 w-1/3 rounded"></div>
-              {[1, 2, 3].map((i) => (
-                <ArticleCardSkeleton key={i} />
-              ))}
+            <div className="hidden lg:block">
+              <SidebarSkeleton />
             </div>
           </div>
           <div className="mt-12">
@@ -317,11 +334,11 @@ export default function Home({ params: { lang } }) {
   if (error) {
     return (
       <div className="bg-gray-50 min-h-screen flex items-center justify-center">
-        <div className="text-center p-8 bg-white rounded-xl shadow-sm">
+        <div className="text-center p-8 bg-white rounded shadow-sm border border-gray-200">
           <p className="text-red-600 mb-4">{error}</p>
           <button
             onClick={fetchArticles}
-            className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition flex items-center gap-2 mx-auto"
+            className="bg-red-700 text-white px-6 py-2 rounded hover:bg-red-800 transition flex items-center gap-2 mx-auto"
           >
             <RefreshCw size={16} /> Retry
           </button>
@@ -332,9 +349,9 @@ export default function Home({ params: { lang } }) {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      {/* MAIN CONTAINER - NO TOP PADDING */}
-      <div className="container mx-auto px-4 pt-0 pb-6">
-        {/* Hero + Trending Sidebar */}
+      {/* MAIN CONTAINER */}
+      <div className="container mx-auto px-4 pt-0 pb-6 max-w-screen-xl">
+        {/* Hero + Sidebar (Latest) */}
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left Column: Featured Articles */}
           <div className="lg:col-span-2">
@@ -344,7 +361,6 @@ export default function Home({ params: { lang } }) {
                 lang={lang}
                 getLocalizedTitle={getLocalizedTitle}
                 getLocalizedExcerpt={getLocalizedExcerpt}
-                formatDate={formatDate}
                 size="large"
               />
             )}
@@ -357,7 +373,6 @@ export default function Home({ params: { lang } }) {
                     lang={lang}
                     getLocalizedTitle={getLocalizedTitle}
                     getLocalizedExcerpt={getLocalizedExcerpt}
-                    formatDate={formatDate}
                     size="small"
                   />
                 ))}
@@ -365,35 +380,36 @@ export default function Home({ params: { lang } }) {
             )}
           </div>
 
-          {/* Right Column: Trending Sidebar - FIXED LEFT GAP */}
-          <div className="space-y-6 ml-0 pl-0">
-            <div className="bg-white p-4 rounded-xl shadow-sm mx-0">
-              <div className="flex items-center gap-2 border-b pb-2 mb-3">
-                <TrendingUp size={18} className="text-red-600" />
-                <h3 className="font-bold text-lg">
-                  {lang === 'bn' ? 'ট্রেন্ডিং' : 'Trending'}
+          {/* Right Column: Latest News Sidebar (Classic "সর্বশেষ" style) */}
+          <div className="space-y-6">
+            <div className="bg-white border border-gray-200 p-4">
+              <div className="flex items-center gap-2 border-b border-red-700 pb-2 mb-3">
+                <Clock size={18} className="text-red-700" />
+                <h3 className="font-bold text-lg font-serif">
+                  {lang === 'bn' ? 'সর্বশেষ' : 'Latest'}
                 </h3>
               </div>
-              {trendingArticles.length > 0 ? (
-                <div className="space-y-1">
-                  {trendingArticles.map((article, idx) => (
+              {sidebarLatest.length > 0 ? (
+                <div className="space-y-3">
+                  {sidebarLatest.map((article) => (
                     <Link
                       key={article.id}
                       href={`/${lang}/article/${article.id}`}
-                      className="flex items-start gap-2 p-2 hover:bg-gray-50 rounded-lg transition"
+                      className="block border-b border-gray-100 pb-3 last:border-0 hover:bg-gray-50 transition p-1"
                     >
-                      <span className="font-bold text-red-500 text-lg min-w-[28px]">
-                        {idx + 1}
-                      </span>
-                      <p className="text-sm font-medium line-clamp-2">
+                      <p className="text-sm font-medium line-clamp-2 hover:text-red-700">
                         {getLocalizedTitle(article)}
                       </p>
+                      <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                        <Clock size={11} />
+                        {getRelativeTime(article.published_at, lang)}
+                      </div>
                     </Link>
                   ))}
                 </div>
               ) : (
                 <p className="text-gray-400 text-sm">
-                  {lang === 'bn' ? 'কোন ট্রেন্ডিং আর্টিকেল নেই' : 'No trending articles'}
+                  {lang === 'bn' ? 'কোন সংবাদ নেই' : 'No news'}
                 </p>
               )}
             </div>
@@ -401,7 +417,7 @@ export default function Home({ params: { lang } }) {
           </div>
         </div>
 
-        {/* Latest News Section */}
+        {/* Latest News Section (Grid) */}
         <div className="mt-12">
           <SectionHeader
             title={lang === 'bn' ? 'সর্বশেষ সংবাদ' : 'Latest News'}
@@ -416,7 +432,6 @@ export default function Home({ params: { lang } }) {
                 lang={lang}
                 getLocalizedTitle={getLocalizedTitle}
                 getLocalizedExcerpt={getLocalizedExcerpt}
-                formatDate={formatDate}
                 size="small"
               />
             ))}
@@ -429,7 +444,7 @@ export default function Home({ params: { lang } }) {
             {Object.entries(categoryArticles).map(([category, articles]) => (
               <div key={category}>
                 <SectionHeader
-                  title={category}
+                  title={lang === 'bn' ? getCategoryBangla(category) : category}
                   seeAllLink={`/${lang}/category/${category.toLowerCase()}`}
                   lang={lang}
                 />
