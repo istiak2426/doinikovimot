@@ -50,16 +50,6 @@ const HeroSkeleton = () => (
   </div>
 )
 
-const ArticleCardSkeleton = () => (
-  <div className="animate-pulse flex gap-3 border-b border-gray-100 pb-3">
-    <div className="w-20 h-20 bg-gray-200 rounded"></div>
-    <div className="flex-1 space-y-2">
-      <div className="h-4 bg-gray-200 w-3/4 rounded"></div>
-      <div className="h-3 bg-gray-200 w-1/2 rounded"></div>
-    </div>
-  </div>
-)
-
 const SidebarSkeleton = () => (
   <div className="bg-white border border-gray-200 p-4">
     <div className="h-6 bg-gray-200 w-1/3 mb-4 rounded"></div>
@@ -337,7 +327,40 @@ export default function Home({ params: { lang } }) {
           </div>
 
           {/* Right Column: Latest News Sidebar */}
-
+          <div className="space-y-6">
+            <div className="bg-white border border-gray-200 p-4">
+              <div className="flex items-center gap-2 border-b border-red-700 pb-2 mb-3">
+                <Clock size={18} className="text-red-700" />
+                <h3 className="font-bold text-lg font-serif">
+                  {lang === 'bn' ? 'সর্বশেষ' : 'Latest'}
+                </h3>
+              </div>
+              {sidebarLatest.length > 0 ? (
+                <div className="space-y-3">
+                  {sidebarLatest.map((article) => (
+                    <Link
+                      key={article.id}
+                      href={`/${lang}/article/${article.id}`}
+                      className="block border-b border-gray-100 pb-3 last:border-0 hover:bg-gray-50 transition p-1"
+                    >
+                      <p className="text-sm font-medium line-clamp-2 hover:text-red-700">
+                        {getLocalizedTitle(article)}
+                      </p>
+                      <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                        <Clock size={11} />
+                        {getRelativeTime(article.published_at, lang)}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400 text-sm">
+                  {lang === 'bn' ? 'কোন সংবাদ নেই' : 'No news'}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Latest News Grid Section */}
         <div className="mt-12">
