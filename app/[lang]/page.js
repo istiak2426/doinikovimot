@@ -3,14 +3,14 @@
 import { useState, useEffect, memo, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Eye, RefreshCw, ChevronRight } from 'lucide-react'
+import { Eye, RefreshCw, ChevronRight, TrendingUp, Clock } from 'lucide-react'
 import { format } from 'date-fns'
 import { bn } from 'date-fns/locale'
 import { supabase } from '@/lib/supabase'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
 // --------------------------------------------------------------
-// AdSense
+// AdSense (optional)
 // --------------------------------------------------------------
 const ADSENSE_READY = false
 const ADSENSE_CLIENT = 'ca-pub-XXXXXXXXXXXXXXXX'
@@ -18,18 +18,16 @@ const ADSENSE_CLIENT = 'ca-pub-XXXXXXXXXXXXXXXX'
 const loadAds = () => {
   try {
     if (typeof window !== 'undefined' && window.adsbygoogle) {
-      (window.adsbygoogle = window.adsbygoogle || []).push({})
+      ;(window.adsbygoogle = window.adsbygoogle || []).push({})
     }
   } catch (e) {}
 }
 
 const AdSlot = ({ slot, style = {} }) => {
-  if (!ADSENSE_READY) return null
-
   useEffect(() => {
-    loadAds()
+    if (ADSENSE_READY) loadAds()
   }, [])
-
+  if (!ADSENSE_READY) return null
   return (
     <div className="my-6 text-center">
       <ins
@@ -47,20 +45,59 @@ const AdSlot = ({ slot, style = {} }) => {
 // --------------------------------------------------------------
 // Helpers
 // --------------------------------------------------------------
-const formatBanglaDate = (date, lang) => {
+const formatDateLocalized = (date, lang) => {
   if (!date) return ''
   const d = new Date(date)
-  return lang === 'bn'
-    ? d.toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' })
-    : format(d, 'PP')
+  if (lang === 'bn') {
+    return d.toLocaleDateString('bn-BD', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  }
+  return format(d, 'PP', { locale: bn }) // fallback to English format
 }
 
 // --------------------------------------------------------------
-// Cards
+// Loading Skeleton Components
+// --------------------------------------------------------------
+const HeroSkeleton = () => (
+  <div className="animate-pulse">
+    <div className="h-80 bg-gray-200 rounded-lg"></div>
+    <div className="mt-3 space-y-2">
+      <div className="h-4 bg-gray-200 w-1/4 rounded"></div>
+      <div className="h-6 bg-gray-200 w-3/4 rounded"></div>
+      <div className="h-4 bg-gray-200 w-full rounded"></div>
+    </div>
+  </div>
+)
+
+const ArticleCardSkeleton = () => (
+  <div className="animate-pulse flex gap-3">
+    <div className="w-20 h-20 bg-gray-200 rounded"></div>
+    <div className="flex-1 space-y-2">
+      <div className="h-4 bg-gray-200 w-3/4 rounded"></div>
+      <div className="h-3 bg-gray-200 w-1/2 rounded"></div>
+    </div>
+  </div>
+)
+
+const CategorySectionSkeleton = () => (
+  <div className="space-y-4">
+    <div className="h-6 bg-gray-200 w-1/3 rounded"></div>
+    <div className="grid grid-cols-1 gap-4">
+      {[1, 2, 3].map((i) => (
+        <ArticleCardSkeleton key={i} />
+      ))}
+    </div>
+  </div>
+)
+
+// --------------------------------------------------------------
+// Article Card Components
 // --------------------------------------------------------------
 const CompactArticleCard = memo(({ article, lang, getLocalizedTitle }) => {
   if (!article) return null
-
   return (
     <Link href={`/${lang}/article/${article.id}`}>
       <div className="flex gap-3 border-b border-gray-100 py-3 hover:bg-gray-50 transition cursor-pointer">
@@ -75,15 +112,18 @@ const CompactArticleCard = memo(({ article, lang, getLocalizedTitle }) => {
             />
           </div>
         )}
-
         <div className="flex-1">
-          <h3 className={`font-semibold text-sm line-clamp-2 hover:text-red-600 ${lang === 'bn' ? 'font-bangla' : ''}`}>
+          <h3
+            className={`font-semibold text-sm line-clamp-2 hover:text-red-600 ${
+              lang === 'bn' ? 'font-bangla' : ''
+            }`}
+          >
             {getLocalizedTitle(article)}
           </h3>
-
-          <div className="text-xs text-gray-400 mt-1">
+          <div className="text-xs text-gray-400 mt-1 flex items-center gap-2">
+            <Clock size={12} />
             {article.published_at
-              ? formatBanglaDate(article.published_at, lang)
+              ? formatDateLocalized(article.published_at, lang)
               : 'No date'}
           </div>
         </div>
@@ -93,58 +133,75 @@ const CompactArticleCard = memo(({ article, lang, getLocalizedTitle }) => {
 })
 CompactArticleCard.displayName = 'CompactArticleCard'
 
-const MainArticleCard = memo(({ article, lang, getLocalizedTitle, getLocalizedExcerpt, formatDate, size = 'large' }) => {
-  if (!article) return null
-
-  return (
-    <Link href={`/${lang}/article/${article.id}`}>
-      <div className="group cursor-pointer">
-        {article.featured_image && (
-          <div className={`relative overflow-hidden rounded bg-gray-100 ${size === 'large' ? 'h-80' : 'h-48'}`}>
-            <Image
-              src={article.featured_image}
-              alt={getLocalizedTitle(article)}
-              fill
-              className="object-cover group-hover:scale-105 transition"
-            />
-          </div>
-        )}
-
-        <div className="mt-3">
-          <span className="text-red-600 text-xs font-bold">{article.category}</span>
-
-          <h2 className={`font-bold mt-1 line-clamp-2 hover:text-red-600 ${size === 'large' ? 'text-xl' : 'text-lg'}`}>
-            {getLocalizedTitle(article)}
-          </h2>
-
-          {size === 'large' && (
-            <p className="text-gray-600 text-sm mt-2 line-clamp-2">
-              {getLocalizedExcerpt(article)}
-            </p>
+const MainArticleCard = memo(
+  ({
+    article,
+    lang,
+    getLocalizedTitle,
+    getLocalizedExcerpt,
+    formatDate,
+    size = 'large',
+  }) => {
+    if (!article) return null
+    const isLarge = size === 'large'
+    return (
+      <Link href={`/${lang}/article/${article.id}`}>
+        <div className="group cursor-pointer">
+          {article.featured_image && (
+            <div
+              className={`relative overflow-hidden rounded bg-gray-100 ${
+                isLarge ? 'h-80 md:h-96' : 'h-48'
+              }`}
+            >
+              <Image
+                src={article.featured_image}
+                alt={getLocalizedTitle(article)}
+                fill
+                className="object-cover group-hover:scale-105 transition duration-300"
+                priority={isLarge}
+              />
+            </div>
           )}
-
-          <div className="text-xs text-gray-400 mt-2 flex gap-3">
-            <span>{formatDate(article.published_at)}</span>
-            <span className="flex items-center gap-1">
-              <Eye size={12} /> {article.views || 0}
-            </span>
+          <div className="mt-3">
+            {article.category && (
+              <span className="text-red-600 text-xs font-bold uppercase tracking-wide">
+                {article.category}
+              </span>
+            )}
+            <h2
+              className={`font-bold mt-1 line-clamp-2 group-hover:text-red-600 ${
+                isLarge ? 'text-2xl md:text-3xl' : 'text-lg'
+              }`}
+            >
+              {getLocalizedTitle(article)}
+            </h2>
+            {isLarge && (
+              <p className="text-gray-600 text-sm mt-2 line-clamp-3">
+                {getLocalizedExcerpt(article)}
+              </p>
+            )}
+            <div className="text-xs text-gray-400 mt-2 flex gap-3">
+              <span>{formatDate(article.published_at)}</span>
+              <span className="flex items-center gap-1">
+                <Eye size={12} /> {article.views?.toLocaleString() || 0}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
-    </Link>
-  )
-})
+      </Link>
+    )
+  }
+)
 MainArticleCard.displayName = 'MainArticleCard'
 
-// --------------------------------------------------------------
-// Header
-// --------------------------------------------------------------
 const SectionHeader = ({ title, seeAllLink, lang }) => (
   <div className="flex justify-between items-center border-b-2 border-red-600 pb-2 mb-4">
-    <h2 className="text-xl font-bold">{title}</h2>
-
+    <h2 className="text-xl md:text-2xl font-bold">{title}</h2>
     {seeAllLink && (
-      <Link href={seeAllLink} className="text-red-600 text-sm flex items-center gap-1">
+      <Link
+        href={seeAllLink}
+        className="text-red-600 text-sm flex items-center gap-1 hover:underline"
+      >
         {lang === 'bn' ? 'সব দেখুন' : 'See all'} <ChevronRight size={16} />
       </Link>
     )}
@@ -152,7 +209,7 @@ const SectionHeader = ({ title, seeAllLink, lang }) => (
 )
 
 // --------------------------------------------------------------
-// Main
+// Main Home Component
 // --------------------------------------------------------------
 export default function Home({ params: { lang } }) {
   const [featuredArticles, setFeaturedArticles] = useState([])
@@ -167,37 +224,53 @@ export default function Home({ params: { lang } }) {
     setError(null)
 
     try {
-      // 🔥 Parallel fetch (FAST)
+      // Parallel fetch for main sections
       const [featuredRes, latestRes, trendingRes] = await Promise.all([
-        supabase.from('articles').select('*').eq('status', 'published').eq('is_featured', true).limit(4),
-        supabase.from('articles').select('*').eq('status', 'published').order('published_at', { ascending: false }).limit(8),
-        supabase.from('articles').select('*').eq('status', 'published').order('views', { ascending: false }).limit(6),
+        supabase
+          .from('articles')
+          .select('*')
+          .eq('status', 'published')
+          .eq('is_featured', true)
+          .limit(4),
+        supabase
+          .from('articles')
+          .select('*')
+          .eq('status', 'published')
+          .order('published_at', { ascending: false })
+          .limit(12),
+        supabase
+          .from('articles')
+          .select('*')
+          .eq('status', 'published')
+          .order('views', { ascending: false })
+          .limit(6),
       ])
 
-      if (featuredRes.error || latestRes.error || trendingRes.error) throw new Error('Fetch failed')
+      if (featuredRes.error || latestRes.error || trendingRes.error)
+        throw new Error('Failed to fetch articles')
 
       setFeaturedArticles(featuredRes.data || [])
       setLatestArticles(latestRes.data || [])
       setTrendingArticles(trendingRes.data || [])
 
-      // categories
-      const cats = ['Politics', 'Business', 'Sports', 'Entertainment', 'International']
+      // Fetch category-specific articles (only categories with data)
+      const categories = ['Politics', 'Business', 'Sports', 'Entertainment', 'Technology']
       const catData = {}
 
       await Promise.all(
-        cats.map(async (cat) => {
-          const { data } = await supabase
+        categories.map(async (cat) => {
+          const { data, error } = await supabase
             .from('articles')
             .select('*')
+            .eq('status', 'published')
             .eq('category', cat)
+            .order('published_at', { ascending: false })
             .limit(4)
-
-          catData[cat] = data || []
+          if (!error && data?.length) catData[cat] = data
         })
       )
 
       setCategoryArticles(catData)
-
     } catch (err) {
       setError(err.message)
     } finally {
@@ -214,52 +287,185 @@ export default function Home({ params: { lang } }) {
     return format(new Date(date), 'PP', { locale: lang === 'bn' ? bn : undefined })
   }
 
-  const getLocalizedTitle = (a) => (lang === 'bn' && a.title_bn ? a.title_bn : a.title)
-  const getLocalizedExcerpt = (a) => (lang === 'bn' && a.excerpt_bn ? a.excerpt_bn : a.excerpt)
+  const getLocalizedTitle = (a) =>
+    lang === 'bn' && a.title_bn ? a.title_bn : a.title
+  const getLocalizedExcerpt = (a) =>
+    lang === 'bn' && a.excerpt_bn ? a.excerpt_bn : a.excerpt
 
-  if (loading) return <LoadingSpinner />
+  const heroArticle = featuredArticles[0]
+  const subHeroArticles = featuredArticles.slice(1, 4)
 
-  if (error) {
+  // Loading state with skeletons
+  if (loading) {
     return (
-      <div className="text-center py-10">
-        <p>{error}</p>
-        <button onClick={fetchArticles} className="bg-red-600 text-white px-4 py-2 mt-4">
-          Retry
-        </button>
+      <div className="bg-gray-50 min-h-screen">
+        <div className="container mx-auto px-4 py-6">
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <HeroSkeleton />
+            </div>
+            <div className="hidden lg:block space-y-4">
+              <div className="h-6 bg-gray-200 w-1/3 rounded"></div>
+              {[1, 2, 3].map((i) => (
+                <ArticleCardSkeleton key={i} />
+              ))}
+            </div>
+          </div>
+          <div className="mt-12">
+            <div className="h-6 bg-gray-200 w-1/4 rounded mb-4"></div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="space-y-2">
+                  <div className="h-48 bg-gray-200 rounded"></div>
+                  <div className="h-4 bg-gray-200 w-3/4 rounded"></div>
+                  <div className="h-3 bg-gray-200 w-1/2 rounded"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
 
-  const hero = featuredArticles[0]
+  if (error) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="text-center p-8 bg-white rounded-xl shadow-sm">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={fetchArticles}
+            className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition flex items-center gap-2 mx-auto"
+          >
+            <RefreshCw size={16} /> Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="bg-gray-50">
+    <div className="bg-gray-50 min-h-screen">
       <div className="container mx-auto px-4 py-6">
-        {hero && (
-          <MainArticleCard
-            article={hero}
+        {/* Hero Section: Featured + Trending Sidebar */}
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Left: Main Featured Article */}
+          <div className="lg:col-span-2">
+            {heroArticle && (
+              <MainArticleCard
+                article={heroArticle}
+                lang={lang}
+                getLocalizedTitle={getLocalizedTitle}
+                getLocalizedExcerpt={getLocalizedExcerpt}
+                formatDate={formatDate}
+                size="large"
+              />
+            )}
+            {/* Sub-featured (grid of 3) */}
+            {subHeroArticles.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8">
+                {subHeroArticles.map((article) => (
+                  <MainArticleCard
+                    key={article.id}
+                    article={article}
+                    lang={lang}
+                    getLocalizedTitle={getLocalizedTitle}
+                    getLocalizedExcerpt={getLocalizedExcerpt}
+                    formatDate={formatDate}
+                    size="small"
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Right: Trending Sidebar */}
+          <div className="space-y-6">
+            <div className="bg-white p-4 rounded-xl shadow-sm">
+              <div className="flex items-center gap-2 border-b pb-2 mb-3">
+                <TrendingUp size={18} className="text-red-600" />
+                <h3 className="font-bold text-lg">
+                  {lang === 'bn' ? 'ট্রেন্ডিং' : 'Trending'}
+                </h3>
+              </div>
+              {trendingArticles.length > 0 ? (
+                <div className="space-y-1">
+                  {trendingArticles.map((article, idx) => (
+                    <Link
+                      key={article.id}
+                      href={`/${lang}/article/${article.id}`}
+                      className="flex items-start gap-2 p-2 hover:bg-gray-50 rounded-lg transition"
+                    >
+                      <span className="font-bold text-red-500 text-lg min-w-[28px]">
+                        {idx + 1}
+                      </span>
+                      <p className="text-sm font-medium line-clamp-2">
+                        {getLocalizedTitle(article)}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400 text-sm">
+                  {lang === 'bn' ? 'কোন ট্রেন্ডিং আর্টিকেল নেই' : 'No trending articles'}
+                </p>
+              )}
+            </div>
+
+            {/* Optional Ad Slot in Sidebar */}
+            <AdSlot slot="0987654321" style={{ minHeight: '250px' }} />
+          </div>
+        </div>
+
+        {/* Latest News Section */}
+        <div className="mt-12">
+          <SectionHeader
+            title={lang === 'bn' ? 'সর্বশেষ সংবাদ' : 'Latest News'}
+            seeAllLink={`/${lang}/latest`}
             lang={lang}
-            getLocalizedTitle={getLocalizedTitle}
-            getLocalizedExcerpt={getLocalizedExcerpt}
-            formatDate={formatDate}
           />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {latestArticles.slice(0, 9).map((article) => (
+              <MainArticleCard
+                key={article.id}
+                article={article}
+                lang={lang}
+                getLocalizedTitle={getLocalizedTitle}
+                getLocalizedExcerpt={getLocalizedExcerpt}
+                formatDate={formatDate}
+                size="small"
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Category Sections (dynamic) */}
+        {Object.keys(categoryArticles).length > 0 && (
+          <div className="mt-12 space-y-12">
+            {Object.entries(categoryArticles).map(([category, articles]) => (
+              <div key={category}>
+                <SectionHeader
+                  title={category}
+                  seeAllLink={`/${lang}/category/${category.toLowerCase()}`}
+                  lang={lang}
+                />
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {articles.slice(0, 4).map((article) => (
+                    <CompactArticleCard
+                      key={article.id}
+                      article={article}
+                      lang={lang}
+                      getLocalizedTitle={getLocalizedTitle}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
-      </div>
 
-      <AdSlot slot="1234567890" />
-
-      <div className="container mx-auto px-4 py-6 grid md:grid-cols-2 gap-6">
-        {latestArticles.map((a) => (
-          <MainArticleCard
-            key={a.id}
-            article={a}
-            lang={lang}
-            getLocalizedTitle={getLocalizedTitle}
-            getLocalizedExcerpt={getLocalizedExcerpt}
-            formatDate={formatDate}
-            size="small"
-          />
-        ))}
+        {/* In-feed Ad (optional) */}
+        <AdSlot slot="1122334455" />
       </div>
     </div>
   )
