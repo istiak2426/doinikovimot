@@ -3,11 +3,10 @@
 import { useState, useEffect, memo, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Eye, RefreshCw, ChevronRight, Clock, TrendingUp } from 'lucide-react'
+import { Eye, RefreshCw, ChevronRight, Clock } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { bn } from 'date-fns/locale'
 import { supabase } from '@/lib/supabase'
-import LoadingSpinner from '@/components/LoadingSpinner'
 
 // --------------------------------------------------------------
 // AdSense (optional)
@@ -51,19 +50,12 @@ const getRelativeTime = (date, lang) => {
     const d = new Date(date)
     if (isNaN(d.getTime())) return ''
     const locale = lang === 'bn' ? bn : undefined
-    // For Bengali, customize suffix to match typical news style
-    if (lang === 'bn') {
-      const result = formatDistanceToNow(d, { addSuffix: true, locale: bn })
-      // Replace "প্রায়" if needed, but keep as is
-      return result
-    }
-    return formatDistanceToNow(d, { addSuffix: true, locale: undefined })
+    return formatDistanceToNow(d, { addSuffix: true, locale })
   } catch (err) {
     return ''
   }
 }
 
-// Map category to Bangla for display
 const getCategoryBangla = (category) => {
   const map = {
     Politics: 'রাজনীতি',
@@ -102,8 +94,8 @@ const ArticleCardSkeleton = () => (
 )
 
 const SidebarSkeleton = () => (
-  <div className="bg-white p-4 border border-gray-200">
-    <div className="h-6 bg-gray-200 w-1/2 mb-4 rounded"></div>
+  <div className="bg-white border border-gray-200 p-4">
+    <div className="h-6 bg-gray-200 w-1/3 mb-4 rounded"></div>
     <div className="space-y-3">
       {[1, 2, 3, 4, 5].map((i) => (
         <div key={i} className="border-b border-gray-100 pb-2">
@@ -298,14 +290,12 @@ export default function Home({ params: { lang } }) {
 
   const heroArticle = featuredArticles[0]
   const subHeroArticles = featuredArticles.slice(1, 4)
-
-  // Sidebar latest (first 6 of latestArticles)
   const sidebarLatest = latestArticles.slice(0, 6)
 
   if (loading) {
     return (
       <div className="bg-gray-50 min-h-screen">
-        <div className="container mx-auto px-4 pt-0 pb-6">
+        <div className="container mx-auto px-4 pt-0 pb-6 max-w-screen-xl">
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <HeroSkeleton />
@@ -349,7 +339,6 @@ export default function Home({ params: { lang } }) {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      {/* MAIN CONTAINER */}
       <div className="container mx-auto px-4 pt-0 pb-6 max-w-screen-xl">
         {/* Hero + Sidebar (Latest) */}
         <div className="grid lg:grid-cols-3 gap-8">
@@ -380,7 +369,7 @@ export default function Home({ params: { lang } }) {
             )}
           </div>
 
-          {/* Right Column: Latest News Sidebar (Classic "সর্বশেষ" style) */}
+          {/* Right Column: Latest News Sidebar */}
           <div className="space-y-6">
             <div className="bg-white border border-gray-200 p-4">
               <div className="flex items-center gap-2 border-b border-red-700 pb-2 mb-3">
@@ -417,7 +406,7 @@ export default function Home({ params: { lang } }) {
           </div>
         </div>
 
-        {/* Latest News Section (Grid) */}
+        {/* Latest News Grid Section */}
         <div className="mt-12">
           <SectionHeader
             title={lang === 'bn' ? 'সর্বশেষ সংবাদ' : 'Latest News'}
