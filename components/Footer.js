@@ -138,7 +138,7 @@ export default function Footer({ lang = 'bn' }) {
 
             <div className="flex space-x-3 md:space-x-4 mb-4 md:mb-6">
 
-              <a href="https://www.facebook.com/doinikovimot" aria-label="Facebook" className="hover:text-blue-400 transition p-1">
+              <a href="https://www.facebook.com/doinikobhimot" aria-label="Facebook" className="hover:text-blue-400 transition p-1">
                 <Facebook size={18} className="md:w-5 md:h-5" />
               </a>
 
