@@ -3,7 +3,14 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Calendar, Eye, User, ArrowLeft, Heart, Share2 } from 'lucide-react'
+import {
+  Calendar,
+  Eye,
+  User,
+  ArrowLeft,
+  Heart,
+  Share2,
+} from 'lucide-react'
 import { format } from 'date-fns'
 import { bn } from 'date-fns/locale'
 import { supabase } from '@/lib/supabase'
@@ -71,93 +78,131 @@ export default function DynamicArticleClient({ initialArticle }) {
 
       {/* 🔥 HEADER */}
       <div className="bg-white border-b sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link href={`/${lang}`} className="flex items-center gap-2 text-gray-600 hover:text-black">
-            <ArrowLeft size={18} />
-            <span className="hidden sm:inline">Back</span>
+            <ArrowLeft size={18} /> Back
           </Link>
 
           <button
             onClick={() => setShareOpen(true)}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition"
+            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200"
           >
             <Share2 size={18} />
           </button>
         </div>
       </div>
 
-      {/* 🔥 ARTICLE */}
-      <article className="max-w-4xl mx-auto px-4 py-6 bg-white shadow-sm">
+      {/* 🔥 MAIN LAYOUT */}
+      <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* TITLE */}
-        <h1 className="text-2xl md:text-4xl font-bold leading-tight mb-4">
-          {title}
-        </h1>
+        {/* 🔥 LEFT SHARE BAR (DESKTOP) */}
+        <div className="hidden lg:flex flex-col gap-3 fixed left-6 top-1/3 z-50">
 
-        {/* META */}
-        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-6 border-b pb-4">
-          <span className="flex items-center gap-1">
-            <User size={16} /> {article.author}
-          </span>
+          <button
+            onClick={handleLike}
+            className="p-3 bg-white shadow rounded-full hover:bg-gray-100"
+          >
+            <Heart size={18} className={liked ? 'fill-red-500 text-red-500' : ''} />
+          </button>
 
-          <span className="flex items-center gap-1">
-            <Calendar size={16} />
-            {format(new Date(article.published_at), 'PPP', {
-              locale: isBn ? bn : undefined,
-            })}
-          </span>
+          <button
+            onClick={() => setShareOpen(true)}
+            className="p-3 bg-white shadow rounded-full hover:bg-gray-100"
+          >
+            <Share2 size={18} />
+          </button>
 
-          <span className="flex items-center gap-1">
-            <Eye size={16} /> {article.views}
-          </span>
         </div>
 
-        {/* IMAGE */}
-        {article.featured_image && (
-          <div className="mb-6 overflow-hidden rounded-xl">
+        {/* 🔥 ARTICLE */}
+        <article className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm">
+
+          <h1 className="text-3xl md:text-5xl font-bold mb-4 leading-tight">
+            {title}
+          </h1>
+
+          {/* META */}
+          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-6 border-b pb-4">
+            <span className="flex items-center gap-1">
+              <User size={16} /> {article.author}
+            </span>
+
+            <span className="flex items-center gap-1">
+              <Calendar size={16} />
+              {format(new Date(article.published_at), 'PPP', {
+                locale: isBn ? bn : undefined,
+              })}
+            </span>
+
+            <span className="flex items-center gap-1">
+              <Eye size={16} /> {article.views}
+            </span>
+          </div>
+
+          {/* IMAGE */}
+          {article.featured_image && (
             <img
               src={article.featured_image}
               alt={title}
               loading="lazy"
-              className="w-full object-cover transition duration-500 hover:scale-105"
+              className="w-full rounded-lg mb-6"
             />
-          </div>
-        )}
+          )}
 
-        {/* EXCERPT */}
-        {excerpt && (
-          <p className="text-lg italic text-gray-700 mb-6 border-l-4 border-red-500 pl-4">
-            {excerpt}
-          </p>
-        )}
+          {/* EXCERPT */}
+          {excerpt && (
+            <p className="text-lg italic text-gray-700 mb-6 border-l-4 border-red-500 pl-4">
+              {excerpt}
+            </p>
+          )}
 
-        {/* CONTENT */}
-        <div
-          className="prose prose-lg max-w-none"
-          dangerouslySetInnerHTML={{ __html: content }}
-        />
-
-      </article>
-
-      {/* 🔥 FLOATING ACTION BAR */}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white shadow-lg rounded-full px-6 py-3 flex gap-6 z-50">
-
-        <button
-          onClick={handleLike}
-          disabled={liked}
-          className="flex items-center gap-2"
-        >
-          <Heart
-            size={20}
-            className={liked ? 'fill-red-500 text-red-500' : ''}
+          {/* CONTENT */}
+          <div
+            className="prose prose-lg max-w-none"
+            dangerouslySetInnerHTML={{ __html: content }}
           />
+
+        </article>
+
+        {/* 🔥 SIDEBAR */}
+        <aside className="space-y-6">
+
+          {/* RELATED NEWS */}
+          <div className="bg-white p-4 rounded-xl shadow-sm">
+            <h3 className="font-bold mb-3 border-b pb-2">Related News</h3>
+
+            <div className="space-y-3 text-sm">
+              <div className="hover:text-red-600 cursor-pointer">
+                🔹 আরেকটি খবর শিরোনাম এখানে
+              </div>
+              <div className="hover:text-red-600 cursor-pointer">
+                🔹 গুরুত্বপূর্ণ সংবাদ আপডেট
+              </div>
+              <div className="hover:text-red-600 cursor-pointer">
+                🔹 সর্বশেষ ব্রেকিং নিউজ
+              </div>
+            </div>
+          </div>
+
+          {/* AUTHOR BOX */}
+          <div className="bg-white p-4 rounded-xl shadow-sm">
+            <h3 className="font-bold mb-2">Author</h3>
+            <p className="text-sm text-gray-600">{article.author}</p>
+          </div>
+
+        </aside>
+
+      </div>
+
+      {/* 🔥 FLOATING ACTION BAR (MOBILE) */}
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white shadow-lg rounded-full px-6 py-3 flex gap-6 z-50 lg:hidden">
+
+        <button onClick={handleLike} className="flex items-center gap-2">
+          <Heart size={20} className={liked ? 'fill-red-500 text-red-500' : ''} />
           {likesCount}
         </button>
 
-        <button
-          onClick={() => setShareOpen(true)}
-          className="flex items-center gap-2"
-        >
+        <button onClick={() => setShareOpen(true)}>
           <Share2 size={20} />
         </button>
 
@@ -167,7 +212,7 @@ export default function DynamicArticleClient({ initialArticle }) {
       {shareOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-end z-50">
 
-          <div className="bg-white w-full p-5 rounded-t-2xl animate-slideUp">
+          <div className="bg-white w-full p-5 rounded-t-2xl">
 
             <div className="flex justify-between mb-4">
               <h3 className="font-semibold text-lg">Share</h3>
@@ -184,7 +229,7 @@ export default function DynamicArticleClient({ initialArticle }) {
                     url: window.location.href,
                   })
                 }
-                className="p-3 bg-gray-100 rounded-lg hover:bg-gray-200"
+                className="p-3 bg-gray-100 rounded-lg"
               >
                 Native Share
               </button>
@@ -193,7 +238,7 @@ export default function DynamicArticleClient({ initialArticle }) {
                 onClick={() =>
                   navigator.clipboard.writeText(window.location.href)
                 }
-                className="p-3 bg-gray-100 rounded-lg hover:bg-gray-200"
+                className="p-3 bg-gray-100 rounded-lg"
               >
                 Copy Link
               </button>
