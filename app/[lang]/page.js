@@ -55,7 +55,7 @@ const formatDateLocalized = (date, lang) => {
       day: 'numeric',
     })
   }
-  return format(d, 'PP', { locale: bn }) // fallback to English format
+  return format(d, 'PP', { locale: bn })
 }
 
 // --------------------------------------------------------------
@@ -78,17 +78,6 @@ const ArticleCardSkeleton = () => (
     <div className="flex-1 space-y-2">
       <div className="h-4 bg-gray-200 w-3/4 rounded"></div>
       <div className="h-3 bg-gray-200 w-1/2 rounded"></div>
-    </div>
-  </div>
-)
-
-const CategorySectionSkeleton = () => (
-  <div className="space-y-4">
-    <div className="h-6 bg-gray-200 w-1/3 rounded"></div>
-    <div className="grid grid-cols-1 gap-4">
-      {[1, 2, 3].map((i) => (
-        <ArticleCardSkeleton key={i} />
-      ))}
     </div>
   </div>
 )
@@ -224,7 +213,6 @@ export default function Home({ params: { lang } }) {
     setError(null)
 
     try {
-      // Parallel fetch for main sections
       const [featuredRes, latestRes, trendingRes] = await Promise.all([
         supabase
           .from('articles')
@@ -253,7 +241,6 @@ export default function Home({ params: { lang } }) {
       setLatestArticles(latestRes.data || [])
       setTrendingArticles(trendingRes.data || [])
 
-      // Fetch category-specific articles (only categories with data)
       const categories = ['Politics', 'Business', 'Sports', 'Entertainment', 'Technology']
       const catData = {}
 
@@ -295,11 +282,10 @@ export default function Home({ params: { lang } }) {
   const heroArticle = featuredArticles[0]
   const subHeroArticles = featuredArticles.slice(1, 4)
 
-  // Loading state with skeletons
   if (loading) {
     return (
       <div className="bg-gray-50 min-h-screen">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 pt-0 pb-6">
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <HeroSkeleton />
@@ -346,10 +332,11 @@ export default function Home({ params: { lang } }) {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      <div className="container mx-auto px-4 py-6">
-        {/* Hero Section: Featured + Trending Sidebar */}
+      {/* MAIN CONTAINER - NO TOP PADDING (pt-0) */}
+      <div className="container mx-auto px-4 pt-0 pb-6">
+        {/* Hero + Trending Sidebar */}
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left: Main Featured Article */}
+          {/* Left Column: Featured Articles */}
           <div className="lg:col-span-2">
             {heroArticle && (
               <MainArticleCard
@@ -361,7 +348,6 @@ export default function Home({ params: { lang } }) {
                 size="large"
               />
             )}
-            {/* Sub-featured (grid of 3) */}
             {subHeroArticles.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8">
                 {subHeroArticles.map((article) => (
@@ -379,7 +365,7 @@ export default function Home({ params: { lang } }) {
             )}
           </div>
 
-          {/* Right: Trending Sidebar */}
+          {/* Right Column: Trending Sidebar */}
           <div className="space-y-6">
             <div className="bg-white p-4 rounded-xl shadow-sm">
               <div className="flex items-center gap-2 border-b pb-2 mb-3">
@@ -411,8 +397,6 @@ export default function Home({ params: { lang } }) {
                 </p>
               )}
             </div>
-
-            {/* Optional Ad Slot in Sidebar */}
             <AdSlot slot="0987654321" style={{ minHeight: '250px' }} />
           </div>
         </div>
@@ -439,7 +423,7 @@ export default function Home({ params: { lang } }) {
           </div>
         </div>
 
-        {/* Category Sections (dynamic) */}
+        {/* Category Sections */}
         {Object.keys(categoryArticles).length > 0 && (
           <div className="mt-12 space-y-12">
             {Object.entries(categoryArticles).map(([category, articles]) => (
@@ -464,7 +448,6 @@ export default function Home({ params: { lang } }) {
           </div>
         )}
 
-        {/* In-feed Ad (optional) */}
         <AdSlot slot="1122334455" />
       </div>
     </div>
