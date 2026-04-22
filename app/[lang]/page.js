@@ -9,39 +9,6 @@ import { bn } from 'date-fns/locale'
 import { supabase } from '@/lib/supabase'
 
 // --------------------------------------------------------------
-// AdSense (optional)
-// --------------------------------------------------------------
-const ADSENSE_READY = false
-const ADSENSE_CLIENT = 'ca-pub-XXXXXXXXXXXXXXXX'
-
-const loadAds = () => {
-  try {
-    if (typeof window !== 'undefined' && window.adsbygoogle) {
-      ;(window.adsbygoogle = window.adsbygoogle || []).push({})
-    }
-  } catch (e) {}
-}
-
-const AdSlot = ({ slot, style = {} }) => {
-  useEffect(() => {
-    if (ADSENSE_READY) loadAds()
-  }, [])
-  if (!ADSENSE_READY) return null
-  return (
-    <div className="my-6 text-center">
-      <ins
-        className="adsbygoogle"
-        style={{ display: 'block', ...style }}
-        data-ad-client={ADSENSE_CLIENT}
-        data-ad-slot={slot}
-        data-ad-format="auto"
-        data-full-width-responsive="true"
-      />
-    </div>
-  )
-}
-
-// --------------------------------------------------------------
 // Helpers
 // --------------------------------------------------------------
 const getRelativeTime = (date, lang) => {
@@ -402,7 +369,6 @@ export default function Home({ params: { lang } }) {
                 </p>
               )}
             </div>
-            <AdSlot slot="0987654321" style={{ minHeight: '250px' }} />
           </div>
         </div>
 
@@ -451,8 +417,6 @@ export default function Home({ params: { lang } }) {
             ))}
           </div>
         )}
-
-        <AdSlot slot="1122334455" />
       </div>
     </div>
   )
