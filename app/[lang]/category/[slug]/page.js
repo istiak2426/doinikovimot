@@ -64,6 +64,7 @@ export default function CategoryPage() {
       sports: 'খেলা',
       entertainment: 'বিনোদন',
       international: 'আন্তর্জাতিক',
+satire: 'স্যাটায়ার'
     },
     en: {
       politics: 'Politics',
@@ -72,6 +73,7 @@ export default function CategoryPage() {
       sports: 'Sports',
       entertainment: 'Entertainment',
       international: 'International',
+satire: 'satire'
     },
   }
 
