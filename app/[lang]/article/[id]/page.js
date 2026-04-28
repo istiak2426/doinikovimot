@@ -3,36 +3,47 @@
 import { supabase } from '@/lib/supabase'
 import DynamicArticleClient from './DynamicArticleClient'
 
-// 🔥 Helper: Get correct OG image URL (CRITICAL FIX)
+/**
+ * 🔥 Extract REAL image URL (fix for Next.js _next/image issue)
+ */
 function getOgImage(rawImage, baseUrl) {
-  if (!rawImage) {
-    return `${baseUrl}/og-image.png`
-  }
+  if (!rawImage) return `${baseUrl}/og-image.png`
 
   try {
-    // ❌ If Next.js optimized image → extract real URL
+    // ✅ Case 1: Next.js optimized image → extract original
     if (rawImage.includes('/_next/image')) {
-      const urlParam = new URL(rawImage).searchParams.get('url')
-      if (urlParam) {
-        return decodeURIComponent(urlParam)
-      }
+      const extracted = new URL(rawImage).searchParams.get('url')
+      if (extracted) return decodeURIComponent(extracted)
     }
 
-    // ✅ If already absolute URL
-    if (rawImage.startsWith('http')) {
-      return rawImage
-    }
+    // ✅ Case 2: Already absolute URL
+    if (rawImage.startsWith('http')) return rawImage
 
-    // ✅ Relative path
+    // ✅ Case 3: Relative path
     return `${baseUrl}${rawImage}`
-
   } catch (err) {
-    console.error('OG Image parse error:', err)
+    console.error('OG Image error:', err)
     return `${baseUrl}/og-image.png`
   }
 }
 
-// 🔥 Facebook / SEO Metadata
+/**
+ * 🔥 Convert WebP → JPG fallback (for Facebook compatibility)
+ */
+function getSafeImage(imageUrl) {
+  if (!imageUrl) return imageUrl
+
+  // Some crawlers don't support webp properly
+  if (imageUrl.endsWith('.webp')) {
+    return imageUrl.replace('.webp', '.jpg')
+  }
+
+  return imageUrl
+}
+
+/**
+ * 🔥 SEO + Facebook Metadata
+ */
 export async function generateMetadata({ params }) {
   const { id, lang } = params
 
@@ -43,7 +54,9 @@ export async function generateMetadata({ params }) {
     .single()
 
   if (!data) {
-    return { title: 'Article Not Found' }
+    return {
+      title: 'Article Not Found',
+    }
   }
 
   const isBn = lang === 'bn'
@@ -62,7 +75,9 @@ export async function generateMetadata({ params }) {
     data.excerpt ||
     'Read more'
 
-  const imageUrl = getOgImage(data.featured_image, baseUrl)
+  // 🔥 MAIN FIX
+  const rawImage = getOgImage(data.featured_image, baseUrl)
+  const safeImage = getSafeImage(rawImage)
 
   const url = `${baseUrl}/${lang}/article/${id}`
 
@@ -75,18 +90,16 @@ export async function generateMetadata({ params }) {
       description,
       url,
       siteName: 'Doinik Obhimot',
+
       images: [
         {
-          url: imageUrl,
+          url: safeImage,
           width: 1200,
           height: 630,
           alt: title,
         },
-        // 🔥 fallback for Facebook compatibility
-        {
-          url: imageUrl.replace('.webp', '.jpg'),
-        },
       ],
+
       type: 'article',
       publishedTime: data.published_at,
       authors: [data.author || 'Doinik Obhimot'],
@@ -97,7 +110,7 @@ export async function generateMetadata({ params }) {
       card: 'summary_large_image',
       title,
       description,
-      images: [imageUrl],
+      images: [safeImage],
       site: '@doinikobhimot',
       creator: '@doinikobhimot',
     },
@@ -111,10 +124,10 @@ export async function generateMetadata({ params }) {
       follow: true,
     },
 
-    // 🔥 EXTRA fallback (VERY IMPORTANT for Facebook)
+    // 🔥 EXTRA Facebook fallback tags (IMPORTANT)
     other: {
-      'og:image': imageUrl,
-      'og:image:secure_url': imageUrl,
+      'og:image': safeImage,
+      'og:image:secure_url': safeImage,
       'og:image:type': 'image/jpeg',
       'og:image:width': '1200',
       'og:image:height': '630',
@@ -122,7 +135,9 @@ export async function generateMetadata({ params }) {
   }
 }
 
-// 🔥 Page render
+/**
+ * 🔥 Page render
+ */
 export default async function Page({ params }) {
   const { id } = params
 
@@ -139,19 +154,25 @@ export default async function Page({ params }) {
   return <DynamicArticleClient initialArticle={data} />
 }
 
-// 🔥 Static params (optional)
+/**
+ * 🔥 Optional: Pre-generate pages
+ */
 export async function generateStaticParams() {
   const { data } = await supabase
     .from('articles')
     .select('id')
     .limit(100)
 
-  return data?.map((article) => ({
-    id: article.id.toString(),
-  })) || []
+  return (
+    data?.map((article) => ({
+      id: article.id.toString(),
+    })) || []
+  )
 }
 
-// 🔥 Simple 404
+/**
+ * 🔥 Simple 404
+ */
 function NotFoundPage() {
   return (
     <div style={{ padding: 40, textAlign: 'center' }}>
