@@ -1,0 +1,11 @@
+# public/robots.txt
+User-agent: *
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Facebot
+Allow: /
+
+Sitemap: https://doinikobhimot.vercel.app/sitemap.xml
