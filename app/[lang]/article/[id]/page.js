@@ -5,6 +5,23 @@ import DynamicArticleClient from './DynamicArticleClient'
 const DEFAULT_OG_IMAGE = '/og-image.png'
 
 /**
+ * 🔥 Transform Supabase image to exact 1200x630 crop (prevents Facebook cropping)
+ */
+function getCroppedOgImage(imageUrl) {
+  if (!imageUrl) return imageUrl
+
+  // Only transform Supabase storage URLs
+  if (imageUrl.includes('supabase.co/storage/v1/object/public')) {
+    // Check if URL already has parameters
+    const separator = imageUrl.includes('?') ? '&' : '?'
+    return `${imageUrl}${separator}width=1200&height=630&resize=cover`
+  }
+
+  // For other images, return as-is
+  return imageUrl
+}
+
+/**
  * 🔥 Extract REAL image URL (fix for Next.js _next/image + relative paths)
  */
 function getOgImage(rawImage, baseUrl) {
@@ -56,7 +73,7 @@ function getImageMimeType(url) {
 }
 
 /**
- * 🔥 SEO + Facebook Metadata (fully fixed)
+ * 🔥 SEO + Facebook Metadata (fully fixed + cropping prevention)
  */
 export async function generateMetadata({ params }) {
   const { id, lang } = params
@@ -84,7 +101,9 @@ export async function generateMetadata({ params }) {
     (isBn && data.excerpt_bn) || data.excerpt || 'Read more'
 
   // ✅ Get clean image URL (never _next/image)
-  const imageUrl = getOgImage(data.featured_image, baseUrl)
+  const rawImageUrl = getOgImage(data.featured_image, baseUrl)
+  // ✅ Apply cropping transformation to force 1200x630
+  const imageUrl = getCroppedOgImage(rawImageUrl)
   const imageMimeType = getImageMimeType(imageUrl)
 
   const url = `${baseUrl}/${lang}/article/${id}`
@@ -169,7 +188,7 @@ export default async function Page({ params }) {
 }
 
 /**
- * 🔥 Pre-generate static pages (FIXED: includes both lang and id)
+ * 🔥 Pre-generate static pages (includes both lang and id)
  */
 export async function generateStaticParams() {
   const { data: articles } = await supabase
