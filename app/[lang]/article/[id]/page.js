@@ -1,36 +1,49 @@
 import { supabase } from '@/lib/supabase'
 import DynamicArticleClient from './DynamicArticleClient'
 
+// Default OG image (place this file in /public/og-image.png)
+const DEFAULT_OG_IMAGE = '/og-image.png'
+
 /**
  * 🔥 Extract REAL image URL (fix for Next.js _next/image + relative paths)
  */
 function getOgImage(rawImage, baseUrl) {
-  if (!rawImage) return `${baseUrl}/og-image.png`
+  // Return default image if no image is provided
+  if (!rawImage) {
+    return new URL(DEFAULT_OG_IMAGE, baseUrl).href
+  }
 
   try {
-    // ✅ Case 1: Next.js optimized image → extract original URL from query param
-    if (rawImage.includes('/_next/image')) {
-      // Use baseUrl as fallback domain for URL parsing
-      const absoluteUrl = rawImage.startsWith('http')
-        ? rawImage
-        : `${baseUrl}${rawImage}`
-      const extracted = new URL(absoluteUrl).searchParams.get('url')
-      if (extracted) return decodeURIComponent(extracted)
+    let imageUrl = rawImage
+
+    // Case 1: It's a Next.js optimized image URL → extract the 'url' parameter
+    if (imageUrl.includes('/_next/image')) {
+      // Ensure we have an absolute URL to parse correctly
+      const absoluteUrl = imageUrl.startsWith('http')
+        ? imageUrl
+        : new URL(imageUrl, baseUrl).href
+      const urlObject = new URL(absoluteUrl)
+      const extractedUrl = urlObject.searchParams.get('url')
+      if (extractedUrl) {
+        imageUrl = decodeURIComponent(extractedUrl)
+      }
     }
 
-    // ✅ Case 2: Already absolute URL
-    if (rawImage.startsWith('http')) return rawImage
+    // Case 2: Already absolute URL
+    if (imageUrl.startsWith('http')) {
+      return imageUrl
+    }
 
-    // ✅ Case 3: Relative path (e.g., "/images/photo.jpg")
-    return `${baseUrl}${rawImage.startsWith('/') ? '' : '/'}${rawImage}`
-  } catch (err) {
-    console.error('OG Image error:', err)
-    return `${baseUrl}/og-image.png`
+    // Case 3: Relative path (e.g., "/images/photo.jpg")
+    return new URL(imageUrl, baseUrl).href
+  } catch (error) {
+    console.error('❌ getOgImage error:', error, 'Raw value:', rawImage)
+    return new URL(DEFAULT_OG_IMAGE, baseUrl).href
   }
 }
 
 /**
- * 🔥 Detect image type from URL extension (for correct og:image:type)
+ * 🔥 Detect image MIME type from extension (for correct og:image:type)
  */
 function getImageMimeType(url) {
   if (!url) return null
@@ -67,9 +80,10 @@ export async function generateMetadata({ params }) {
     'https://doinikobhimot.vercel.app'
 
   const title = (isBn && data.title_bn) || data.title || 'Article'
-  const description = (isBn && data.excerpt_bn) || data.excerpt || 'Read more'
+  const description =
+    (isBn && data.excerpt_bn) || data.excerpt || 'Read more'
 
-  // ✅ Get clean image URL (no _next/image wrapper)
+  // ✅ Get clean image URL (never _next/image)
   const imageUrl = getOgImage(data.featured_image, baseUrl)
   const imageMimeType = getImageMimeType(imageUrl)
 
@@ -124,7 +138,7 @@ export async function generateMetadata({ params }) {
       follow: true,
     },
 
-    // ✅ Extra Facebook tags (without hardcoding type)
+    // ✅ Extra Facebook tags (dynamic type)
     other: {
       'og:image': imageUrl,
       'og:image:secure_url': imageUrl,
