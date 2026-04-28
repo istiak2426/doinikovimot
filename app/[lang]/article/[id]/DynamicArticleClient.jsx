@@ -328,16 +328,19 @@ export default function DynamicArticleClient({ initialArticle }) {
                   </div>
                 </div>
 
-                {/* Featured Image */}
+                {/* ✅ FIXED: Featured Image - No Cropping */}
                 {article.featured_image && (
-                  <div className="relative w-full h-64 md:h-96 mb-6 rounded-xl overflow-hidden">
-                    <Image
-                      src={article.featured_image}
-                      alt={title}
-                      fill
-                      className="object-cover"
-                      priority
-                    />
+                  <div className="relative w-full mb-6 rounded-xl overflow-hidden bg-gray-100">
+                    <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
+                      <Image
+                        src={article.featured_image}
+                        alt={title}
+                        fill
+                        className="object-contain"   // ✅ KEY CHANGE: object-contain shows entire image
+                        priority
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+                      />
+                    </div>
                   </div>
                 )}
 
