@@ -1,11 +1,12 @@
-# public/robots.txt
 User-agent: *
 Allow: /
 
+# 🔥 Allow Facebook crawler
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: Facebot
+# 🔥 Allow Twitter
+User-agent: Twitterbot
 Allow: /
 
 Sitemap: https://doinikobhimot.vercel.app/sitemap.xml
