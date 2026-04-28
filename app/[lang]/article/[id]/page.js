@@ -1,8 +1,38 @@
 // app/[lang]/article/[id]/page.js
+
 import { supabase } from '@/lib/supabase'
 import DynamicArticleClient from './DynamicArticleClient'
 
-// 🔥 Facebook / SEO (Prothom Alo style preview)
+// 🔥 Helper: Get correct OG image URL (CRITICAL FIX)
+function getOgImage(rawImage, baseUrl) {
+  if (!rawImage) {
+    return `${baseUrl}/og-image.png`
+  }
+
+  try {
+    // ❌ If Next.js optimized image → extract real URL
+    if (rawImage.includes('/_next/image')) {
+      const urlParam = new URL(rawImage).searchParams.get('url')
+      if (urlParam) {
+        return decodeURIComponent(urlParam)
+      }
+    }
+
+    // ✅ If already absolute URL
+    if (rawImage.startsWith('http')) {
+      return rawImage
+    }
+
+    // ✅ Relative path
+    return `${baseUrl}${rawImage}`
+
+  } catch (err) {
+    console.error('OG Image parse error:', err)
+    return `${baseUrl}/og-image.png`
+  }
+}
+
+// 🔥 Facebook / SEO Metadata
 export async function generateMetadata({ params }) {
   const { id, lang } = params
 
@@ -18,28 +48,32 @@ export async function generateMetadata({ params }) {
 
   const isBn = lang === 'bn'
 
-  const title = (isBn && data.title_bn) || data.title || 'Article'
-  const description = (isBn && data.excerpt_bn) || data.excerpt || 'Read more'
-  
-  // ✅ FIX 1: Ensure absolute URL with proper domain
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://doinikobhimot.vercel.app'
-  const imageUrl = data.featured_image 
-    ? (data.featured_image.startsWith('http') 
-        ? data.featured_image 
-        : `${baseUrl}${data.featured_image}`)
-    : `${baseUrl}/og-image.png` // Create a default OG image
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    'https://doinikobhimot.vercel.app'
+
+  const title =
+    (isBn && data.title_bn) ||
+    data.title ||
+    'Article'
+
+  const description =
+    (isBn && data.excerpt_bn) ||
+    data.excerpt ||
+    'Read more'
+
+  const imageUrl = getOgImage(data.featured_image, baseUrl)
 
   const url = `${baseUrl}/${lang}/article/${id}`
 
   return {
     title: `${title} | Doinik Obhimot`,
     description,
-    
-    // ✅ FIX 2: Add all required OG tags
+
     openGraph: {
-      title: title,
-      description: description,
-      url: url,
+      title,
+      description,
+      url,
       siteName: 'Doinik Obhimot',
       images: [
         {
@@ -47,7 +81,10 @@ export async function generateMetadata({ params }) {
           width: 1200,
           height: 630,
           alt: title,
-          type: 'image/jpeg',
+        },
+        // 🔥 fallback for Facebook compatibility
+        {
+          url: imageUrl.replace('.webp', '.jpg'),
         },
       ],
       type: 'article',
@@ -55,30 +92,37 @@ export async function generateMetadata({ params }) {
       authors: [data.author || 'Doinik Obhimot'],
       locale: isBn ? 'bn_BD' : 'en_US',
     },
-    
-    // ✅ FIX 3: Add complete Twitter card
+
     twitter: {
       card: 'summary_large_image',
-      title: title,
-      description: description,
+      title,
+      description,
       images: [imageUrl],
-      site: '@doinikobhimot', // Add your Twitter handle
+      site: '@doinikobhimot',
       creator: '@doinikobhimot',
     },
-    
-    // ✅ FIX 4: Add basic meta tags for compatibility
+
     alternates: {
       canonical: url,
     },
-    
+
     robots: {
       index: true,
       follow: true,
     },
+
+    // 🔥 EXTRA fallback (VERY IMPORTANT for Facebook)
+    other: {
+      'og:image': imageUrl,
+      'og:image:secure_url': imageUrl,
+      'og:image:type': 'image/jpeg',
+      'og:image:width': '1200',
+      'og:image:height': '630',
+    },
   }
 }
 
-// 🔥 Page render (server → client)
+// 🔥 Page render
 export default async function Page({ params }) {
   const { id } = params
 
@@ -95,15 +139,24 @@ export default async function Page({ params }) {
   return <DynamicArticleClient initialArticle={data} />
 }
 
-// Optional: Add a head component for extra meta tags
+// 🔥 Static params (optional)
 export async function generateStaticParams() {
-  // Optional: Pre-generate popular articles for faster loading
   const { data } = await supabase
     .from('articles')
     .select('id')
     .limit(100)
-  
+
   return data?.map((article) => ({
     id: article.id.toString(),
   })) || []
+}
+
+// 🔥 Simple 404
+function NotFoundPage() {
+  return (
+    <div style={{ padding: 40, textAlign: 'center' }}>
+      <h1>404</h1>
+      <p>Article not found</p>
+    </div>
+  )
 }
