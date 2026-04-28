@@ -328,7 +328,7 @@ export default function DynamicArticleClient({ initialArticle }) {
                   </div>
                 </div>
 
-                {/* ✅ FIXED: Featured Image - No Cropping */}
+                {/* Fixed: No cropping image */}
                 {article.featured_image && (
                   <div className="relative w-full mb-6 rounded-xl overflow-hidden bg-gray-100">
                     <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
@@ -336,7 +336,7 @@ export default function DynamicArticleClient({ initialArticle }) {
                         src={article.featured_image}
                         alt={title}
                         fill
-                        className="object-contain"   // ✅ KEY CHANGE: object-contain shows entire image
+                        className="object-contain"
                         priority
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
                       />
@@ -478,13 +478,14 @@ export default function DynamicArticleClient({ initialArticle }) {
         </button>
       </div>
 
-      {/* Share Modal */}
+      {/* Compact Share Modal */}
       {shareOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end z-50 animate-in fade-in duration-200">
-          <div className="bg-white w-full rounded-t-2xl animate-in slide-in-from-bottom-4 duration-300">
-            <div className="p-5">
-              <div className="flex justify-between items-center mb-5">
-                <h3 className="font-semibold text-lg">Share this article</h3>
+          <div className="bg-white w-full rounded-t-2xl animate-in slide-in-from-bottom-4 duration-300 max-h-[85vh] overflow-y-auto">
+            <div className="p-4">
+              {/* Header */}
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-medium text-base">Share this article</h3>
                 <button 
                   onClick={() => setShareOpen(false)}
                   className="p-1 hover:bg-gray-100 rounded-full transition-colors"
@@ -493,7 +494,8 @@ export default function DynamicArticleClient({ initialArticle }) {
                 </button>
               </div>
 
-              <div className="grid grid-cols-4 gap-3 text-center mb-5">
+              {/* First row: Native, Copy, Facebook, WhatsApp */}
+              <div className="grid grid-cols-4 gap-2 mb-3">
                 <button
                   onClick={() => {
                     if (navigator.share) {
@@ -504,61 +506,62 @@ export default function DynamicArticleClient({ initialArticle }) {
                       }).catch(() => {})
                     }
                   }}
-                  className="flex flex-col items-center gap-2 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                  className="flex flex-col items-center gap-1 py-2 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
                 >
-                  <Share2 size={22} className="text-gray-700" />
-                  <span className="text-xs">Native</span>
+                  <Share2 size={18} className="text-gray-700" />
+                  <span className="text-[11px] text-gray-600">Native</span>
                 </button>
 
                 <button
                   onClick={handleCopyLink}
-                  className="flex flex-col items-center gap-2 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                  className="flex flex-col items-center gap-1 py-2 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
                 >
-                  {copied ? <Check size={22} className="text-green-600" /> : <LinkIcon size={22} className="text-gray-700" />}
-                  <span className="text-xs">{copied ? 'Copied!' : 'Copy'}</span>
+                  {copied ? <Check size={18} className="text-green-600" /> : <LinkIcon size={18} className="text-gray-700" />}
+                  <span className="text-[11px] text-gray-600">{copied ? 'Copied!' : 'Copy'}</span>
                 </button>
 
                 <a
                   href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex flex-col items-center gap-2 p-3 bg-[#1877F2]/10 rounded-xl hover:bg-[#1877F2]/20 transition-colors"
+                  className="flex flex-col items-center gap-1 py-2 bg-[#1877F2]/10 rounded-xl hover:bg-[#1877F2]/20 transition-colors"
                 >
-                  <Facebook size={22} className="text-[#1877F2]" />
-                  <span className="text-xs">Facebook</span>
+                  <Facebook size={18} className="text-[#1877F2]" />
+                  <span className="text-[11px] text-gray-600">Facebook</span>
                 </a>
 
                 <a
                   href={`https://wa.me/?text=${encodeURIComponent(title + ' ' + window.location.href)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex flex-col items-center gap-2 p-3 bg-[#25D366]/10 rounded-xl hover:bg-[#25D366]/20 transition-colors"
+                  className="flex flex-col items-center gap-1 py-2 bg-[#25D366]/10 rounded-xl hover:bg-[#25D366]/20 transition-colors"
                 >
-                  <svg className="w-5.5 h-5.5" viewBox="0 0 24 24" fill="#25D366">
+                  <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="#25D366">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.967-.94 1.165-.173.199-.347.223-.644.075-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
                   </svg>
-                  <span className="text-xs">WhatsApp</span>
+                  <span className="text-[11px] text-gray-600">WhatsApp</span>
                 </a>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Second row: Twitter, LinkedIn */}
+              <div className="grid grid-cols-2 gap-2">
                 <a
                   href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(window.location.href)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 p-2.5 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-center gap-2 py-2 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
                 >
-                  <Twitter size={18} className="text-[#1DA1F2]" />
-                  <span className="text-sm">Twitter</span>
+                  <Twitter size={16} className="text-[#1DA1F2]" />
+                  <span className="text-xs text-gray-700">Twitter</span>
                 </a>
                 <a
                   href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 p-2.5 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-center gap-2 py-2 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
                 >
-                  <Linkedin size={18} className="text-[#0A66C2]" />
-                  <span className="text-sm">LinkedIn</span>
+                  <Linkedin size={16} className="text-[#0A66C2]" />
+                  <span className="text-xs text-gray-700">LinkedIn</span>
                 </a>
               </div>
             </div>
