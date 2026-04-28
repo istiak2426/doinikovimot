@@ -4,28 +4,59 @@ const locales = ['bn', 'en']
 const defaultLocale = 'bn'
 
 export function middleware(request) {
-  const pathname = request.nextUrl.pathname
-  
-  // Allow public access to article routes (no redirect needed)
-  // This ensures Facebook crawler can access articles directly
+  const { pathname } = request.nextUrl
+
+  // 🔥 Get user agent
+  const ua = request.headers.get('user-agent') || ''
+
+  // 🔥 Detect crawlers (Facebook, Twitter, etc.)
+  const isBot =
+    ua.includes('facebookexternalhit') ||
+    ua.includes('Facebot') ||
+    ua.includes('Twitterbot') ||
+    ua.includes('Slackbot') ||
+    ua.includes('LinkedInBot') ||
+    ua.includes('WhatsApp')
+
+  // ✅ 1. ALWAYS allow bots (CRITICAL FIX)
+  if (isBot) {
+    return NextResponse.next()
+  }
+
+  // ✅ 2. Always allow article pages (no redirect, no block)
   if (pathname.includes('/article/')) {
     return NextResponse.next()
   }
-  
-  // Check if pathname has locale
-  const pathnameHasLocale = locales.some(
-    locale => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
+
+  // ✅ 3. Skip static files and Next internals
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
+    pathname.includes('.') // files like .png, .jpg, etc.
+  ) {
+    return NextResponse.next()
+  }
+
+  // ✅ 4. Check if locale exists
+  const hasLocale = locales.some(
+    (locale) =>
+      pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   )
-  
-  if (pathnameHasLocale) return NextResponse.next()
-  
-  // Redirect to default locale for other routes
-  request.nextUrl.pathname = `/${defaultLocale}${pathname}`
-  return NextResponse.redirect(request.nextUrl)
+
+  if (hasLocale) {
+    return NextResponse.next()
+  }
+
+  // ✅ 5. Redirect to default locale
+  const url = request.nextUrl.clone()
+  url.pathname = `/${defaultLocale}${pathname}`
+
+  return NextResponse.redirect(url)
 }
 
+// 🔥 Matcher (keep clean)
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.png|.*\\.jpg|.*\\.svg).*)',
+    '/((?!_next|api|favicon.ico|robots.txt|sitemap.xml).*)',
   ],
 }
