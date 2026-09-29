@@ -68,7 +68,7 @@ export default function Footer({ lang = 'bn' }) {
   // lang-prefixed route helper
   const p = (path) => `/${lang}${path}`
 
-  // quick links — এক জায়গায় রেখে map করা হলো
+  // quick links — centrally managed
   const quickLinks = [
     { href: '/about', label: t.about },
     { href: '/contact', label: t.contact },
@@ -77,6 +77,18 @@ export default function Footer({ lang = 'bn' }) {
     { href: '/terms', label: t.terms },
     { href: '/disclaimer', label: t.disclaimer },
     { href: '/editorial-policy', label: t.editorial },
+  ]
+
+  const socials = [
+    {
+      href: 'https://www.facebook.com/doinikobhimot',
+      label: 'Facebook',
+      Icon: Facebook,
+      hover: 'hover:text-blue-400',
+    },
+    { href: '#', label: 'Twitter', Icon: Twitter, hover: 'hover:text-sky-400' },
+    { href: '#', label: 'Instagram', Icon: Instagram, hover: 'hover:text-pink-500' },
+    { href: '#', label: 'YouTube', Icon: Youtube, hover: 'hover:text-red-500' },
   ]
 
   // ---------- Scroll to top ----------
@@ -114,7 +126,7 @@ export default function Footer({ lang = 'bn' }) {
       //   body: JSON.stringify({ email: email.trim(), lang }),
       // })
 
-      await new Promise((r) => setTimeout(r, 700)) // ডেমো delay
+      await new Promise((r) => setTimeout(r, 700)) // demo delay
       setStatus('success')
       setEmail('')
     } catch {
@@ -134,7 +146,8 @@ export default function Footer({ lang = 'bn' }) {
         className={`fixed bottom-4 right-4 md:bottom-8 md:right-8 z-40
           bg-red-600 text-white p-2.5 md:p-3 rounded-full shadow-lg
           hover:bg-red-700 active:scale-95 transition-all duration-200
-          focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
+          focus:outline-none focus-visible:ring-2 focus-visible:ring-white
+          focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
           ${showTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}
       >
         <ChevronUp size={20} className="md:w-6 md:h-6" aria-hidden="true" />
@@ -149,45 +162,22 @@ export default function Footer({ lang = 'bn' }) {
               <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4">
                 {isBangla ? 'দৈনিক অভিমত' : 'Doinik Obhimot'}
               </h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                {t.tagline}
-              </p>
+              <p className="text-gray-400 text-sm leading-relaxed">{t.tagline}</p>
 
               <div className="flex space-x-1 mt-5">
-                <a
-                  href="https://www.facebook.com/doinikobhimot"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Facebook"
-                  className="p-2 rounded-lg text-gray-400 hover:text-blue-400 hover:bg-white/5 transition
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
-                >
-                  <Facebook size={18} aria-hidden="true" />
-                </a>
-                <a
-                  href="#"
-                  aria-label="Twitter"
-                  className="p-2 rounded-lg text-gray-400 hover:text-sky-400 hover:bg-white/5 transition
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
-                >
-                  <Twitter size={18} aria-hidden="true" />
-                </a>
-                <a
-                  href="#"
-                  aria-label="Instagram"
-                  className="p-2 rounded-lg text-gray-400 hover:text-pink-500 hover:bg-white/5 transition
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
-                >
-                  <Instagram size={18} aria-hidden="true" />
-                </a>
-                <a
-                  href="#"
-                  aria-label="YouTube"
-                  className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-white/5 transition
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
-                >
-                  <Youtube size={18} aria-hidden="true" />
-                </a>
+                {socials.map(({ href, label, Icon, hover }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target={href.startsWith('http') ? '_blank' : undefined}
+                    rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    aria-label={label}
+                    className={`p-2 rounded-lg text-gray-400 ${hover} hover:bg-white/5 transition
+                      focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70`}
+                  >
+                    <Icon size={18} aria-hidden="true" />
+                  </a>
+                ))}
               </div>
             </div>
 
@@ -201,8 +191,8 @@ export default function Footer({ lang = 'bn' }) {
                   <li key={link.href}>
                     <Link
                       href={p(link.href)}
-                      className="inline-block py-1 hover:text-white transition
-                        focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded"
+                      className="inline-block py-1 hover:text-white transition rounded
+                        focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
                     >
                       {link.label}
                     </Link>
@@ -221,8 +211,8 @@ export default function Footer({ lang = 'bn' }) {
                   <Phone size={14} className="shrink-0" aria-hidden="true" />
                   <a
                     href="tel:+8801683522917"
-                    className="hover:text-white transition
-                      focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded"
+                    className="hover:text-white transition rounded
+                      focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
                   >
                     +880 1683 522 917
                   </a>
@@ -231,8 +221,8 @@ export default function Footer({ lang = 'bn' }) {
                   <Mail size={14} className="shrink-0" aria-hidden="true" />
                   <a
                     href="mailto:doinikobhimot@gmail.com"
-                    className="hover:text-white transition break-all
-                      focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded"
+                    className="hover:text-white transition break-all rounded
+                      focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
                   >
                     doinikobhimot@gmail.com
                   </a>
@@ -280,7 +270,8 @@ export default function Footer({ lang = 'bn' }) {
                       bg-red-600 px-4 py-2 rounded-lg hover:bg-red-700
                       active:scale-[.98] transition text-sm whitespace-nowrap
                       disabled:opacity-60 disabled:cursor-not-allowed
-                      focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                      focus:outline-none focus-visible:ring-2 focus-visible:ring-white
+                      focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
                   >
                     {status === 'loading' && (
                       <Loader2 size={14} className="animate-spin" aria-hidden="true" />
