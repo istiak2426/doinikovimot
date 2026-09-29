@@ -24,6 +24,7 @@ export default function Footer({ lang = 'bn' }) {
       terms: 'শর্তাবলী',
       advertise: 'বিজ্ঞাপন',
       disclaimer: 'দাবিত্যাগ',
+      editorial: 'সম্পাদকীয় নীতি',
       subscribe: 'সাবস্ক্রাইব',
       subscribeHint: 'নতুন সংবাদ সরাসরি আপনার ইমেইলে',
       emailPlaceholder: 'আপনার ইমেইল',
@@ -35,7 +36,7 @@ export default function Footer({ lang = 'bn' }) {
       contactUs: 'যোগাযোগ করুন',
       tagline: 'সত্য ও নির্ভুল সংবাদে প্রতিশ্রুতিবদ্ধ। নির্ভেজাল সংবাদ সবার আগে।',
       editor: 'সম্পাদক ও প্রকাশক: আরিফ মারজান',
-      copyright: 'স্বত্ব © ২০২৬ দৈনিক অভিমত',
+      copyright: 'স্বত্ব © {year} দৈনিক অভিমত',
     },
     en: {
       about: 'About Us',
@@ -44,6 +45,7 @@ export default function Footer({ lang = 'bn' }) {
       terms: 'Terms of Use',
       advertise: 'Advertise',
       disclaimer: 'Disclaimer',
+      editorial: 'Editorial Policy',
       subscribe: 'Subscribe',
       subscribeHint: 'Get the latest news straight to your inbox',
       emailPlaceholder: 'Your email',
@@ -55,7 +57,7 @@ export default function Footer({ lang = 'bn' }) {
       contactUs: 'Contact Us',
       tagline: 'Committed to truth and accurate news. Unbiased news for everyone.',
       editor: 'Editor & Publisher: Arif Marjan',
-      copyright: 'Copyright © 2026 Doinik Obhimot',
+      copyright: 'Copyright © {year} Doinik Obhimot',
     },
   }
 
@@ -65,6 +67,17 @@ export default function Footer({ lang = 'bn' }) {
 
   // lang-prefixed route helper
   const p = (path) => `/${lang}${path}`
+
+  // quick links — এক জায়গায় রেখে map করা হলো
+  const quickLinks = [
+    { href: '/about', label: t.about },
+    { href: '/contact', label: t.contact },
+    { href: '/advertise', label: t.advertise },
+    { href: '/privacy-policy', label: t.privacy },
+    { href: '/terms', label: t.terms },
+    { href: '/disclaimer', label: t.disclaimer },
+    { href: '/editorial-policy', label: t.editorial },
+  ]
 
   // ---------- Scroll to top ----------
   const [showTop, setShowTop] = useState(false)
@@ -109,6 +122,8 @@ export default function Footer({ lang = 'bn' }) {
     }
   }
 
+  const currentYear = new Date().getFullYear()
+
   return (
     <>
       {/* Scroll to top */}
@@ -144,28 +159,32 @@ export default function Footer({ lang = 'bn' }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Facebook"
-                  className="p-2 rounded-lg text-gray-400 hover:text-blue-400 hover:bg-white/5 transition"
+                  className="p-2 rounded-lg text-gray-400 hover:text-blue-400 hover:bg-white/5 transition
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
                 >
                   <Facebook size={18} aria-hidden="true" />
                 </a>
                 <a
                   href="#"
                   aria-label="Twitter"
-                  className="p-2 rounded-lg text-gray-400 hover:text-sky-400 hover:bg-white/5 transition"
+                  className="p-2 rounded-lg text-gray-400 hover:text-sky-400 hover:bg-white/5 transition
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
                 >
                   <Twitter size={18} aria-hidden="true" />
                 </a>
                 <a
                   href="#"
                   aria-label="Instagram"
-                  className="p-2 rounded-lg text-gray-400 hover:text-pink-500 hover:bg-white/5 transition"
+                  className="p-2 rounded-lg text-gray-400 hover:text-pink-500 hover:bg-white/5 transition
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
                 >
                   <Instagram size={18} aria-hidden="true" />
                 </a>
                 <a
                   href="#"
                   aria-label="YouTube"
-                  className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-white/5 transition"
+                  className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-white/5 transition
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
                 >
                   <Youtube size={18} aria-hidden="true" />
                 </a>
@@ -178,36 +197,17 @@ export default function Footer({ lang = 'bn' }) {
                 {t.quickLinks}
               </h4>
               <ul className="space-y-1 text-gray-400 text-sm">
-                <li>
-                  <Link href={p('/about')} className="inline-block py-1 hover:text-white transition">
-                    {t.about}
-                  </Link>
-                </li>
-                <li>
-                  <Link href={p('/contact')} className="inline-block py-1 hover:text-white transition">
-                    {t.contact}
-                  </Link>
-                </li>
-                <li>
-                  <Link href={p('/advertise')} className="inline-block py-1 hover:text-white transition">
-                    {t.advertise}
-                  </Link>
-                </li>
-                <li>
-                  <Link href={p('/privacy-policy')} className="inline-block py-1 hover:text-white transition">
-                    {t.privacy}
-                  </Link>
-                </li>
-                <li>
-                  <Link href={p('/terms')} className="inline-block py-1 hover:text-white transition">
-                    {t.terms}
-                  </Link>
-                </li>
-                <li>
-                  <Link href={p('/disclaimer')} className="inline-block py-1 hover:text-white transition">
-                    {t.disclaimer}
-                  </Link>
-                </li>
+                {quickLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={p(link.href)}
+                      className="inline-block py-1 hover:text-white transition
+                        focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
 
@@ -219,13 +219,21 @@ export default function Footer({ lang = 'bn' }) {
               <ul className="space-y-3 text-gray-400 text-sm">
                 <li className="flex items-center gap-2">
                   <Phone size={14} className="shrink-0" aria-hidden="true" />
-                  <a href="tel:+8801683522917" className="hover:text-white transition">
+                  <a
+                    href="tel:+8801683522917"
+                    className="hover:text-white transition
+                      focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded"
+                  >
                     +880 1683 522 917
                   </a>
                 </li>
                 <li className="flex items-center gap-2">
                   <Mail size={14} className="shrink-0" aria-hidden="true" />
-                  <a href="mailto:doinikobhimot@gmail.com" className="hover:text-white transition break-all">
+                  <a
+                    href="mailto:doinikobhimot@gmail.com"
+                    className="hover:text-white transition break-all
+                      focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded"
+                  >
                     doinikobhimot@gmail.com
                   </a>
                 </li>
@@ -306,7 +314,7 @@ export default function Footer({ lang = 'bn' }) {
           {/* ---------- Bottom bar ---------- */}
           <div className="border-t border-gray-800 mt-8 pt-6 text-center text-gray-400 text-xs md:text-sm space-y-1">
             <p>{t.editor}</p>
-            <p>{t.copyright}</p>
+            <p>{t.copyright.replace('{year}', currentYear)}</p>
           </div>
         </div>
       </footer>
