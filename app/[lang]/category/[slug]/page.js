@@ -16,13 +16,19 @@ export default function CategoryPage() {
   const lang = Array.isArray(params.lang) ? params.lang[0] : params.lang
 
   const [articles, setArticles] = useState([])
+  const [categoryName, setCategoryName] = useState(slug || 'Category')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const normalizedCategory = slug ? slug.charAt(0).toUpperCase() + slug.slice(1).toLowerCase() : ''
+  const normalizedCategory = slug
+    ? slug.charAt(0).toUpperCase() + slug.slice(1).toLowerCase()
+    : ''
 
   useEffect(() => {
-    if (slug) fetchCategoryArticles()
+    if (slug) {
+      fetchCategoryArticles()
+      fetchCategoryName()
+    }
   }, [slug, lang])
 
   async function fetchCategoryArticles() {
@@ -45,6 +51,29 @@ export default function CategoryPage() {
     }
   }
 
+  async function fetchCategoryName() {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('name_bn, name_en')
+        .eq('slug', slug.toLowerCase())
+        .maybeSingle()
+
+      if (error || !data) {
+        setCategoryName(slug)
+        return
+      }
+
+      setCategoryName(
+        lang === 'bn'
+          ? data.name_bn || data.name_en
+          : data.name_en || data.name_bn
+      )
+    } catch {
+      setCategoryName(slug)
+    }
+  }
+
   const formatDate = (date) => {
     if (!date) return ''
     try {
@@ -55,29 +84,6 @@ export default function CategoryPage() {
       return date
     }
   }
-
-  const categoryNames = {
-    bn: {
-      politics: 'রাজনীতি',
-      technology: 'প্রযুক্তি',
-      business: 'বাণিজ্য',
-      sports: 'খেলা',
-      entertainment: 'বিনোদন',
-      international: 'আন্তর্জাতিক',
-satire: 'স্যাটায়ার'
-    },
-    en: {
-      politics: 'Politics',
-      technology: 'Technology',
-      business: 'Business',
-      sports: 'Sports',
-      entertainment: 'Entertainment',
-      international: 'International',
-satire: 'satire'
-    },
-  }
-
-  const categoryName = categoryNames[lang]?.[slug?.toLowerCase()] || slug || 'Category'
 
   const getLocalizedTitle = (article) => {
     if (lang === 'bn' && article.title_bn) return article.title_bn
@@ -95,13 +101,15 @@ satire: 'satire'
     return (
       <div className="container-custom py-8 text-center">
         <div className="bg-red-50 text-red-600 p-6 rounded-lg max-w-md mx-auto">
-          <p className="text-lg font-semibold mb-2">Failed to load articles</p>
+          <p className="text-lg font-semibold mb-2">
+            {lang === 'bn' ? 'লোড করা যায়নি' : 'Failed to load articles'}
+          </p>
           <p className="text-sm mb-4">{error}</p>
           <button
             onClick={fetchCategoryArticles}
             className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
           >
-            Try Again
+            {lang === 'bn' ? 'আবার চেষ্টা করুন' : 'Try Again'}
           </button>
         </div>
       </div>
@@ -127,21 +135,21 @@ satire: 'satire'
               key={article.id}
               className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition flex flex-col"
             >
-              {/* Image section with fallback */}
               <div className="relative h-48 bg-gray-100">
                 {article.featured_image ? (
                   <Image
                     src={article.featured_image}
                     alt={getLocalizedTitle(article)}
                     fill
-                    className="object-contain" // ← Full image, no cropping
+                    className="object-contain"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none'
                       const parent = e.currentTarget.parentElement
                       if (parent) {
                         const fallbackDiv = document.createElement('div')
-                        fallbackDiv.className = 'w-full h-full flex items-center justify-center bg-gray-200 text-gray-500'
+                        fallbackDiv.className =
+                          'w-full h-full flex items-center justify-center bg-gray-200 text-gray-500'
                         fallbackDiv.innerHTML = '📷'
                         parent.appendChild(fallbackDiv)
                       }
