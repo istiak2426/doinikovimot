@@ -1,5 +1,6 @@
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import GoogleAnalytics from '@/components/GoogleAnalytics' 
 
 export const metadata = {
   metadataBase: new URL(
@@ -23,10 +24,13 @@ export async function generateStaticParams() {
 }
 
 export default function LangLayout({ children, params }) {
-  const { lang } = params   // Next.js 14
+  const { lang } = params   
 
   return (
     <>
+      {/* 👇 Google Analytics কম্পোনেন্টটি এখানে বসান */}
+      <GoogleAnalytics /> 
+      
       <Header propLang={lang} />
       <main className="min-h-screen bg-gray-50">{children}</main>
       <Footer lang={lang} />
