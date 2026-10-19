@@ -34,9 +34,9 @@ export default function Footer({ lang = 'bn' }) {
       follow: 'আমাদের অনুসরণ করুন',
       quickLinks: 'দ্রুত লিংক',
       contactUs: 'যোগাযোগ করুন',
-      tagline: 'ইন্টারনেটের তাজা মিমস, ভাইরাল ট্রেন্ডস, ফ্যাশন রোস্ট ও তরুণ সংস্কৃতির খোলামেলা মঞ্চ।',
-      editor: 'চিফ মিম লর্ড ও মিমবাজ ক্রিয়েটিভ টিম',
-      copyright: 'স্বত্ব © {year} মিমবাজ (MemeBaz) · সর্বস্বত্ব সংরক্ষিত',
+      tagline: 'রাজনীতি, নেতাদের কাণ্ডকারখানা, তাজা মিমস ও ভাইরাল ট্রেন্ডসের খোলামেলা স্যাটায়ার মঞ্চ।',
+      editor: 'চিফ নেতা অবজারভার ও ওরে নেতা রে ক্রিয়েটিভ সেল',
+      copyright: 'স্বত্ব © {year} ওরে নেতা রে (Ore Neta Re) · সর্বস্বত্ব সংরক্ষিত',
     },
     en: {
       about: 'About Us',
@@ -47,17 +47,17 @@ export default function Footer({ lang = 'bn' }) {
       disclaimer: 'Disclaimer',
       editorial: 'Editorial Policy',
       subscribe: 'Subscribe',
-      subscribeHint: 'Get the freshest viral memes & roasts in your inbox',
+      subscribeHint: 'Get freshest political satire & memes in your inbox',
       emailPlaceholder: 'Your email',
-      subscribeSuccess: 'Thank you! You are now subscribed to MemeBaz.',
+      subscribeSuccess: 'Thank you! You are now subscribed to Ore Neta Re.',
       subscribeError: 'Please enter a valid email address.',
       subscribeLoading: 'Sending…',
       follow: 'Follow Us',
       quickLinks: 'Quick Links',
       contactUs: 'Contact Us',
-      tagline: 'Fresh internet memes, viral fashion roasts, witty satire & unfiltered youth culture.',
-      editor: 'Editor & Chief Memer: MemeBaz Editorial Guild',
-      copyright: 'Copyright © {year} MemeBaz',
+      tagline: 'The ultimate destination for political satire, viral memes, leader roasts & pop-culture commentary.',
+      editor: 'Chief Satire Officer & Ore Neta Re Editorial Team',
+      copyright: 'Copyright © {year} Ore Neta Re · All rights reserved',
     },
   }
 
@@ -159,9 +159,14 @@ export default function Footer({ lang = 'bn' }) {
 
             {/* ---------- About ---------- */}
             <div>
-              <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4">
-                {isBangla ? 'মিমবাজ' : 'MemeBaz'}
-              </h3>
+              <div className="flex items-center gap-2 mb-3 md:mb-4">
+                <span className="bg-red-600 text-white font-black text-lg px-2.5 py-0.5 rounded tracking-tight font-bangla">
+                  {isBangla ? 'ওরে নেতা রে' : 'ORE NETA RE'}
+                </span>
+                <span className="text-[10px] font-mono bg-stone-800 text-red-400 border border-stone-700 px-1.5 py-0.5 rounded uppercase font-bold">
+                  MEME
+                </span>
+              </div>
               <p className="text-gray-400 text-sm leading-relaxed">{t.tagline}</p>
 
               <div className="flex space-x-1 mt-5">

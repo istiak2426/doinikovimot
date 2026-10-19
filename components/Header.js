@@ -18,14 +18,14 @@ import LanguageSwitcher from './LanguageSwitcher'
 import { supabase } from '@/lib/supabase'
 
 const FALLBACK_CATEGORIES = [
-  { slug: 'fashion', name_bn: 'ফ্যাশন', name_en: 'Fashion' },
-  { slug: 'style', name_bn: 'স্টাইল ও সৌন্দর্য', name_en: 'Style & Beauty' },
-  { slug: 'lifestyle', name_bn: 'লাইফস্টাইল', name_en: 'Lifestyle' },
+  { slug: 'satire', name_bn: 'স্যাটায়ার', name_en: 'Satire' },
+  { slug: 'meme', name_bn: 'মিম ও রোস্ট', name_en: 'Memes & Roasts' },
+  { slug: 'politics', name_bn: 'নেতার কাণ্ড', name_en: 'Neta Antics' },
+  { slug: 'style', name_bn: 'নেতা ফ্যাশন', name_en: 'Neta Style' },
+  { slug: 'lifestyle', name_bn: 'টং কূটনীতি', name_en: 'Tea Stall Talk' },
   { slug: 'entertainment', name_bn: 'বিনোদন', name_en: 'Entertainment' },
   { slug: 'national', name_bn: 'জাতীয়', name_en: 'National' },
-  { slug: 'economy', name_bn: 'অর্থনীতি', name_en: 'Economy' },
   { slug: 'sports', name_bn: 'খেলা', name_en: 'Sports' },
-  { slug: 'technology', name_bn: 'প্রযুক্তি', name_en: 'Technology' },
 ]
 
 const VISIBLE_COUNT = 6
@@ -152,22 +152,22 @@ export default function Header({ propLang }) {
         <div className="container-custom">
           {/* 3-column grid: logo | nav (center) | icons */}
           <div className="grid grid-cols-[auto_1fr_auto] items-center py-3 md:py-4 gap-4">
-            {/* === Left: Logo === */}
+            {/* === Left: Ore Neta Re Logo === */}
             <Link
               href={`/${lang}`}
               className="group flex flex-col justify-self-start transition"
               style={{ lineHeight: '1.2' }}
             >
-              <div className="flex items-center gap-1.5">
-                <span className="text-2xl md:text-3xl font-extrabold text-red-600 group-hover:text-red-700 tracking-tight">
-                  {lang === 'bn' ? 'মিমবাজ' : 'MemeBaz'}
+              <div className="flex items-center gap-2">
+                <span className="bg-red-600 text-white font-black text-xl md:text-2xl px-2.5 py-0.5 rounded tracking-tight shadow-sm font-bangla">
+                  {lang === 'bn' ? 'ওরে নেতা রে' : 'ORE NETA RE'}
                 </span>
-                <span className="text-xs bg-red-100 text-red-700 font-bold px-1.5 py-0.5 rounded text-[10px] uppercase">
-                  MEME
+                <span className="text-[10px] font-mono font-bold bg-red-100 text-red-800 border border-red-300 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                  SATIRE · MEME
                 </span>
               </div>
-              <span className="text-[10px] md:text-xs text-gray-500 font-medium">
-                {lang === 'bn' ? 'ভাইরাল মিমস, স্যাটায়ার ও ফ্যাশন ট্রোল' : 'Viral Memes, Satire & Fashion Roasts'}
+              <span className="text-[10px] md:text-xs text-stone-500 font-medium tracking-tight mt-0.5">
+                {lang === 'bn' ? 'ভাইরাল মিমস, রাজনৈতিক স্যাটায়ার ও ট্রেন্ডস' : 'Viral Memes, Political Satire & Pop-Culture'}
               </span>
             </Link>
 
@@ -382,8 +382,8 @@ export default function Header({ propLang }) {
               <div>
                 <p className="text-sm text-gray-600 mb-2">
                   {lang === 'bn'
-                    ? 'সংবাদ পড়তে লগইন করুন'
-                    : 'Login to read news'}
+                    ? 'মিমস ও এক্সপ্লেইনার পড়তে লগইন করুন'
+                    : 'Login to read memes & stories'}
                 </p>
                 <Link
                   href={`/${lang}/auth`}

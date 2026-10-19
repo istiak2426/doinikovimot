@@ -3,7 +3,7 @@ import { CURATED_FASHION_ARTICLES } from '@/lib/fashionArticles'
 import DynamicArticleClient from './DynamicArticleClient'
 
 // Default OG image
-const DEFAULT_OG_IMAGE = '/images/fashion/hero.jpg'
+const DEFAULT_OG_IMAGE = '/images/satire/hero.jpg'
 
 /**
  * 🔥 Transform Supabase image to exact 1200x630 crop (prevents Facebook cropping)
@@ -135,18 +135,18 @@ export async function generateMetadata({ params }) {
   }
 
   return {
-    title: `${title} | MemeBaz (মিমবাজ)`,
+    title: `${title} | Ore Neta Re (ওরে নেতা রে)`,
     description,
 
     openGraph: {
       title,
       description,
       url,
-      siteName: 'MemeBaz (মিমবাজ)',
+      siteName: 'Ore Neta Re (ওরে নেতা রে)',
       images: ogImages,
       type: 'article',
       publishedTime: data.published_at,
-      authors: [data.author || 'MemeBaz'],
+      authors: [data.author || 'Ore Neta Re'],
       locale: isBn ? 'bn_BD' : 'en_US',
     },
 

@@ -7,12 +7,12 @@ export const metadata = {
     process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
   ),
   title: {
-    default: 'মিমবাজ (MemeBaz)',
-    template: '%s | MemeBaz (মিমবাজ)',
+    default: 'ওরে নেতা রে (Ore Neta Re)',
+    template: '%s | Ore Neta Re (ওরে নেতা রে)',
   },
-  description: 'ভাইরাল মিমস, ট্রেন্ডস, ফ্যাশন ও স্যাটায়ার — মিমবাজ (MemeBaz)',
+  description: 'রাজনীতি, নেতাদের কাণ্ডকারখানা, ভাইরাল মিমস ও স্যাটায়ার — ওরে নেতা রে (Ore Neta Re)',
   openGraph: {
-    siteName: 'MemeBaz (মিমবাজ)',
+    siteName: 'ওরে নেতা রে (Ore Neta Re)',
     type: 'website',
     locale: 'bn_BD',
   },
