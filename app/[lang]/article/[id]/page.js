@@ -2,8 +2,8 @@ import { supabase } from '@/lib/supabase'
 import { CURATED_FASHION_ARTICLES } from '@/lib/fashionArticles'
 import DynamicArticleClient from './DynamicArticleClient'
 
-// Default OG image (place this file in /public/og-image.png)
-const DEFAULT_OG_IMAGE = '/og-image.png'
+// Default OG image
+const DEFAULT_OG_IMAGE = '/images/fashion/hero.jpg'
 
 /**
  * 🔥 Transform Supabase image to exact 1200x630 crop (prevents Facebook cropping)
