@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "যোগাযোগ - Doinik Obhimot",
+  title: "যোগাযোগ - ওরে নেতা রে (Ore Neta Re)",
   description: "আমাদের সাথে যোগাযোগ করুন - যেকোনো প্রশ্ন, মতামত বা সহযোগিতার জন্য",
 }
 
@@ -8,20 +8,24 @@ export default function Contact() {
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <h1 className="text-3xl font-bold mb-4 text-gray-800">যোগাযোগ</h1>
 
-      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r-lg">
+      <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-lg">
         <p className="text-gray-700">
-          যেকোনো প্রশ্ন, মতামত বা সহযোগিতার জন্য আমাদের সাথে যোগাযোগ করুন। আপনার বার্তা পেয়ে আমরা দ্রুত সাড়া দিতে চেষ্টা করব।
+          যেকোনো প্রশ্ন, মতামত, স্যাটায়ার আইডিয়া বা সহযোগিতার জন্য আমাদের সাথে যোগাযোগ করুন। আপনার বার্তা পেয়ে আমরা দ্রুত সাড়া দিতে চেষ্টা করব।
         </p>
       </div>
 
       <div className="bg-gray-50 p-5 rounded-lg mb-6 space-y-3">
         <p className="flex items-center gap-3">
+          <span className="font-semibold text-gray-700 min-w-[70px]">দায়িত্বে:</span>
+          <span className="text-gray-900 font-medium">শাহ ইসতিয়াক শান্ত (Shah Istiak Shanto) — চিফ নেতা অবজারভার (Chief Neta Observer)</span>
+        </p>
+        <p className="flex items-center gap-3">
           <span className="font-semibold text-gray-700 min-w-[70px]">ইমেইল:</span>
-          <a href="mailto:doinikovimot@gmail.com" className="text-blue-600 hover:underline">doinikovimot@gmail.com</a>
+          <a href="mailto:orenetare@gmail.com" className="text-red-600 hover:underline">orenetare@gmail.com</a>
         </p>
         <p className="flex items-center gap-3">
           <span className="font-semibold text-gray-700 min-w-[70px]">ফোন:</span>
-          <a href="tel:+880168352291" className="text-blue-600 hover:underline">+880168352291</a>
+          <a href="tel:+8801748008483" className="text-red-600 hover:underline">+880 1748 008 483</a>
         </p>
         <p className="flex items-center gap-3">
           <span className="font-semibold text-gray-700 min-w-[70px]">ঠিকানা:</span>
@@ -30,12 +34,12 @@ export default function Contact() {
       </div>
 
       <form
-        action="https://formsubmit.co/doinikobhimot@gmail.com"
+        action="https://formsubmit.co/orenetare@gmail.com"
         method="POST"
         className="space-y-4 bg-white p-6 rounded-lg shadow-md border"
       >
         {/* FormSubmit configuration */}
-        <input type="hidden" name="_subject" value="Doinik Obhimot - নতুন যোগাযোগ বার্তা" />
+        <input type="hidden" name="_subject" value="ওরে নেতা রে - নতুন যোগাযোগ বার্তা" />
         <input type="hidden" name="_captcha" value="true" />
         <input type="hidden" name="_template" value="table" />
         <input type="hidden" name="_replyto" value="email" />

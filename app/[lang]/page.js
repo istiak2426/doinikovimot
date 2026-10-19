@@ -312,14 +312,17 @@ export default function Home({ params: { lang } }) {
             </span>
           </div>
 
-          <div className="flex items-center gap-3 text-xs text-stone-500">
-            <span>{isBn ? 'এডিশন ২০২৬' : 'Edition 2026'}</span>
-            <span aria-hidden="true">·</span>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-stone-500">
+            <span className="font-semibold text-stone-800 bg-stone-100 px-2.5 py-1 rounded-md border border-stone-200 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-red-600"></span>
+              <span>{isBn ? 'চিফ নেতা অবজারভার: শাহ ইসতিয়াক শান্ত (Shah Istiak Shanto)' : 'Chief Neta Observer: Shah Istiak Shanto'}</span>
+            </span>
+            <span aria-hidden="true" className="hidden sm:inline">·</span>
             <Link
               href={`/${lang}/category/satire`}
               className="text-stone-700 hover:text-red-700 transition font-medium underline-offset-4 hover:underline"
             >
-              {isBn ? 'সব স্যাটায়ার আর্টিকেল' : 'Explore All Satire'}
+              {isBn ? 'সব স্যাটায়ার' : 'All Satire'}
             </Link>
           </div>
         </div>

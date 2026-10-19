@@ -58,6 +58,15 @@ export default function About({ params }) {
             </div>
           </div>
 
+          <div className="p-4 bg-stone-50 rounded-lg border border-stone-200 my-6">
+            <h3 className="font-bold text-stone-900 text-sm mb-1">
+              {isBn ? 'নেতৃত্ব ও পর্যবেক্ষণ' : 'Leadership & Observation'}
+            </h3>
+            <p className="text-xs text-stone-700 leading-relaxed">
+              <strong>শাহ ইসতিয়াক শান্ত (Shah Istiak Shanto)</strong> — {isBn ? 'চিফ নেতা অবজারভার (Chief Neta Observer), ওরে নেতা রে।' : 'Chief Neta Observer, Ore Neta Re.'}
+            </p>
+          </div>
+
           <div className="p-4 bg-red-50 rounded-lg border-l-4 border-red-600 my-6">
             <h3 className="font-bold text-red-900 text-sm mb-1">
               {isBn ? '⚠️ স্যাটায়ার সতর্কবার্তা (Satire Disclaimer)' : '⚠️ Satire Disclaimer'}

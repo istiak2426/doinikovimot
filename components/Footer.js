@@ -35,7 +35,7 @@ export default function Footer({ lang = 'bn' }) {
       quickLinks: 'দ্রুত লিংক',
       contactUs: 'যোগাযোগ করুন',
       tagline: 'রাজনীতি, নেতাদের কাণ্ডকারখানা, তাজা মিমস ও ভাইরাল ট্রেন্ডসের খোলামেলা স্যাটায়ার মঞ্চ।',
-      editor: 'চিফ নেতা অবজারভার ও ওরে নেতা রে ক্রিয়েটিভ সেল',
+      editor: 'চিফ নেতা অবজারভার: শাহ ইসতিয়াক শান্ত (Shah Istiak Shanto) · ওরে নেতা রে ক্রিয়েটিভ সেল',
       copyright: 'স্বত্ব © {year} ওরে নেতা রে (Ore Neta Re) · সর্বস্বত্ব সংরক্ষিত',
     },
     en: {
@@ -56,7 +56,7 @@ export default function Footer({ lang = 'bn' }) {
       quickLinks: 'Quick Links',
       contactUs: 'Contact Us',
       tagline: 'The ultimate destination for political satire, viral memes, leader roasts & pop-culture commentary.',
-      editor: 'Chief Satire Officer & Ore Neta Re Editorial Team',
+      editor: 'Chief Neta Observer: Shah Istiak Shanto · Ore Neta Re Editorial Team',
       copyright: 'Copyright © {year} Ore Neta Re · All rights reserved',
     },
   }
@@ -215,21 +215,21 @@ export default function Footer({ lang = 'bn' }) {
                 <li className="flex items-center gap-2">
                   <Phone size={14} className="shrink-0" aria-hidden="true" />
                   <a
-                    href="tel:+8801683522917"
+                    href="tel:+8801748008483"
                     className="hover:text-white transition rounded
                       focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
                   >
-                    +880 1683 522 917
+                    +880 1748 008 483
                   </a>
                 </li>
                 <li className="flex items-center gap-2">
                   <Mail size={14} className="shrink-0" aria-hidden="true" />
                   <a
-                    href="mailto:doinikobhimot@gmail.com"
+                    href="mailto:orenetare@gmail.com"
                     className="hover:text-white transition break-all rounded
                       focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
                   >
-                    doinikobhimot@gmail.com
+                    orenetare@gmail.com
                   </a>
                 </li>
                 <li className="flex items-center gap-2">
