@@ -18,13 +18,17 @@ import LanguageSwitcher from './LanguageSwitcher'
 import { supabase } from '@/lib/supabase'
 
 const FALLBACK_CATEGORIES = [
-  { slug: 'national', name_bn: 'জাতীয়', name_en: 'National' },
-  { slug: 'jobs', name_bn: 'চাকরি', name_en: 'Jobs' },
-  { slug: 'economy', name_bn: 'অর্থনীতি', name_en: 'Economy' },
+  { slug: 'fashion', name_bn: 'ফ্যাশন', name_en: 'Fashion' },
+  { slug: 'style', name_bn: 'স্টাইল ও সৌন্দর্য', name_en: 'Style & Beauty' },
   { slug: 'lifestyle', name_bn: 'লাইফস্টাইল', name_en: 'Lifestyle' },
+  { slug: 'entertainment', name_bn: 'বিনোদন', name_en: 'Entertainment' },
+  { slug: 'national', name_bn: 'জাতীয়', name_en: 'National' },
+  { slug: 'economy', name_bn: 'অর্থনীতি', name_en: 'Economy' },
+  { slug: 'sports', name_bn: 'খেলা', name_en: 'Sports' },
+  { slug: 'technology', name_bn: 'প্রযুক্তি', name_en: 'Technology' },
 ]
 
-const VISIBLE_COUNT = 5
+const VISIBLE_COUNT = 6
 
 export default function Header({ propLang }) {
   const params = useParams()
@@ -104,7 +108,16 @@ export default function Header({ propLang }) {
       )
       if (!res.ok) return
       const data = await res.json()
-      if (Array.isArray(data) && data.length > 0) setCategories(data)
+      if (Array.isArray(data) && data.length > 0) {
+        const priorityCategories = [
+          { slug: 'fashion', name_bn: 'ফ্যাশন', name_en: 'Fashion' },
+          { slug: 'style', name_bn: 'স্টাইল ও সৌন্দর্য', name_en: 'Style & Beauty' },
+          { slug: 'lifestyle', name_bn: 'লাইফস্টাইল', name_en: 'Lifestyle' },
+        ]
+        const existingSlugs = new Set(priorityCategories.map((c) => c.slug))
+        const otherCategories = data.filter((c) => !existingSlugs.has(c.slug?.toLowerCase()))
+        setCategories([...priorityCategories, ...otherCategories])
+      }
     } catch (err) {
       console.warn('categories fetch crashed:', err.message)
     }
@@ -142,10 +155,20 @@ export default function Header({ propLang }) {
             {/* === Left: Logo === */}
             <Link
               href={`/${lang}`}
-              className="text-2xl md:text-3xl font-bold text-red-600 hover:text-red-700 transition justify-self-start"
-              style={{ lineHeight: '1.3' }}
+              className="group flex flex-col justify-self-start transition"
+              style={{ lineHeight: '1.2' }}
             >
-              {lang === 'bn' ? 'দৈনিক অভিমত' : 'Doinik Obhimot'}
+              <div className="flex items-center gap-1.5">
+                <span className="text-2xl md:text-3xl font-extrabold text-red-600 group-hover:text-red-700 tracking-tight">
+                  {lang === 'bn' ? 'মিমবাজ' : 'MemeBaz'}
+                </span>
+                <span className="text-xs bg-red-100 text-red-700 font-bold px-1.5 py-0.5 rounded text-[10px] uppercase">
+                  MEME
+                </span>
+              </div>
+              <span className="text-[10px] md:text-xs text-gray-500 font-medium">
+                {lang === 'bn' ? 'ভাইরাল মিমস, স্যাটায়ার ও ফ্যাশন ট্রোল' : 'Viral Memes, Satire & Fashion Roasts'}
+              </span>
             </Link>
 
             {/* === Center: Navigation (centered) === */}

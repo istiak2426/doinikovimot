@@ -7,14 +7,14 @@ export const metadata = {
     process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
   ),
   title: {
-    default: 'Doinik Obhimot',
-    template: '%s | Doinik Obhimot',
+    default: 'মিমবাজ (MemeBaz)',
+    template: '%s | MemeBaz (মিমবাজ)',
   },
-  description: 'Latest news, articles, and updates from Doinik Obhimot',
+  description: 'ভাইরাল মিমস, ট্রেন্ডস, ফ্যাশন ও স্যাটায়ার — মিমবাজ (MemeBaz)',
   openGraph: {
-    siteName: 'Doinik Obhimot',
+    siteName: 'MemeBaz (মিমবাজ)',
     type: 'website',
-    locale: 'en_US',
+    locale: 'bn_BD',
   },
   robots: { index: true, follow: true },
 }

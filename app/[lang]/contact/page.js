@@ -42,7 +42,7 @@ export default function Contact() {
         
         {/* Honeypot spam protection */}
         <div className="hidden">
-          <label htmlFor="_gotcha">Don't fill this</label>
+          <label htmlFor="_gotcha">Don&apos;t fill this</label>
           <input type="text" id="_gotcha" name="_gotcha" tabIndex={-1} autoComplete="off" />
         </div>
 

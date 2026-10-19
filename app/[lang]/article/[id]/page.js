@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { CURATED_FASHION_ARTICLES } from '@/lib/fashionArticles'
 import DynamicArticleClient from './DynamicArticleClient'
 
 // Default OG image (place this file in /public/og-image.png)
@@ -78,11 +79,21 @@ function getImageMimeType(url) {
 export async function generateMetadata({ params }) {
   const { id, lang } = params
 
-  const { data } = await supabase
-    .from('articles')
-    .select('*')
-    .eq('id', id)
-    .single()
+  let data = null
+  try {
+    const res = await supabase
+      .from('articles')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle()
+    data = res.data
+  } catch {
+    data = null
+  }
+
+  if (!data) {
+    data = CURATED_FASHION_ARTICLES.find((a) => a.id === id || a.slug === id)
+  }
 
   if (!data) {
     return {
@@ -124,18 +135,18 @@ export async function generateMetadata({ params }) {
   }
 
   return {
-    title: `${title} | Doinik Obhimot`,
+    title: `${title} | MemeBaz (মিমবাজ)`,
     description,
 
     openGraph: {
       title,
       description,
       url,
-      siteName: 'Doinik Obhimot',
+      siteName: 'MemeBaz (মিমবাজ)',
       images: ogImages,
       type: 'article',
       publishedTime: data.published_at,
-      authors: [data.author || 'Doinik Obhimot'],
+      authors: [data.author || 'MemeBaz'],
       locale: isBn ? 'bn_BD' : 'en_US',
     },
 
@@ -174,11 +185,21 @@ export async function generateMetadata({ params }) {
 export default async function Page({ params }) {
   const { id } = params
 
-  const { data } = await supabase
-    .from('articles')
-    .select('*')
-    .eq('id', id)
-    .single()
+  let data = null
+  try {
+    const res = await supabase
+      .from('articles')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle()
+    data = res.data
+  } catch {
+    data = null
+  }
+
+  if (!data) {
+    data = CURATED_FASHION_ARTICLES.find((a) => a.id === id || a.slug === id)
+  }
 
   if (!data) {
     return <NotFoundPage />
@@ -190,24 +211,36 @@ export default async function Page({ params }) {
 /**
  * 🔥 Pre-generate static pages (includes both lang and id)
  */
+export const dynamicParams = true
+
 export async function generateStaticParams() {
-  const { data: articles } = await supabase
-    .from('articles')
-    .select('id')
-    .limit(100)
-
-  if (!articles) return []
-
   const languages = ['en', 'bn']
   const params = []
 
-  for (const article of articles) {
+  for (const fa of CURATED_FASHION_ARTICLES) {
     for (const lang of languages) {
-      params.push({
-        lang: lang,
-        id: article.id.toString(),
-      })
+      params.push({ lang, id: fa.id })
     }
+  }
+
+  try {
+    const { data: articles, error } = await supabase
+      .from('articles')
+      .select('id')
+      .limit(100)
+
+    if (!error && articles) {
+      for (const article of articles) {
+        for (const lang of languages) {
+          params.push({
+            lang: lang,
+            id: article.id.toString(),
+          })
+        }
+      }
+    }
+  } catch (e) {
+    // return what we have
   }
 
   return params

@@ -4,11 +4,26 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Calendar } from 'lucide-react'
+import { Calendar, Sparkles } from 'lucide-react'
 import { format } from 'date-fns'
 import { bn } from 'date-fns/locale'
 import { supabase } from '@/lib/supabase'
+import { CURATED_FASHION_ARTICLES } from '@/lib/fashionArticles'
 import LoadingSpinner from '@/components/LoadingSpinner'
+
+const FALLBACK_CATEGORY_MAP = {
+  fashion: { bn: 'ফ্যাশন', en: 'Fashion' },
+  style: { bn: 'স্টাইল ও সৌন্দর্য', en: 'Style & Beauty' },
+  lifestyle: { bn: 'লাইফস্টাইল', en: 'Lifestyle' },
+  national: { bn: 'জাতীয়', en: 'National' },
+  economy: { bn: 'অর্থনীতি', en: 'Economy' },
+  sports: { bn: 'খেলা', en: 'Sports' },
+  entertainment: { bn: 'বিনোদন', en: 'Entertainment' },
+  technology: { bn: 'প্রযুক্তি', en: 'Technology' },
+  politics: { bn: 'রাজনীতি', en: 'Politics' },
+  business: { bn: 'বাণিজ্য', en: 'Business' },
+  satire: { bn: 'স্যাটায়ার', en: 'Satire' },
+}
 
 export default function CategoryPage() {
   const params = useParams()
@@ -38,29 +53,62 @@ export default function CategoryPage() {
       const { data, error } = await supabase
         .from('articles')
         .select('*')
-        .eq('category', normalizedCategory)
+        .ilike('category', `%${slug}%`)
         .eq('status', 'published')
         .order('published_at', { ascending: false })
-      if (error) throw error
-      setArticles(data || [])
+
+      const dbArticles = data || []
+      const lowerSlug = (slug || '').toLowerCase()
+      const matchingCurated = CURATED_FASHION_ARTICLES.filter((a) => {
+        const cat = a.category.toLowerCase()
+        if (lowerSlug === 'fashion') return cat === 'fashion'
+        if (lowerSlug === 'style') return cat === 'style'
+        if (lowerSlug === 'lifestyle') return cat === 'lifestyle' || cat === 'fashion' || cat === 'style'
+        return false
+      })
+
+      const seenIds = new Set(dbArticles.map((a) => a.id))
+      const combined = [...dbArticles]
+      matchingCurated.forEach((a) => {
+        if (!seenIds.has(a.id)) {
+          combined.push(a)
+        }
+      })
+
+      setArticles(combined)
     } catch (err) {
       console.error('Failed to fetch category articles:', err)
-      setError(err.message)
+      const lowerSlug = (slug || '').toLowerCase()
+      const matchingCurated = CURATED_FASHION_ARTICLES.filter(
+        (a) => a.category.toLowerCase() === lowerSlug || lowerSlug === 'lifestyle'
+      )
+      if (matchingCurated.length > 0) {
+        setArticles(matchingCurated)
+      } else {
+        setError(err.message)
+      }
     } finally {
       setLoading(false)
     }
   }
 
   async function fetchCategoryName() {
+    const lowerSlug = (slug || '').toLowerCase()
+    const fallback = FALLBACK_CATEGORY_MAP[lowerSlug]
+
     try {
       const { data, error } = await supabase
         .from('categories')
         .select('name_bn, name_en')
-        .eq('slug', slug.toLowerCase())
+        .eq('slug', lowerSlug)
         .maybeSingle()
 
       if (error || !data) {
-        setCategoryName(slug)
+        if (fallback) {
+          setCategoryName(lang === 'bn' ? fallback.bn : fallback.en)
+        } else {
+          setCategoryName(slug)
+        }
         return
       }
 
@@ -70,7 +118,11 @@ export default function CategoryPage() {
           : data.name_en || data.name_bn
       )
     } catch {
-      setCategoryName(slug)
+      if (fallback) {
+        setCategoryName(lang === 'bn' ? fallback.bn : fallback.en)
+      } else {
+        setCategoryName(slug)
+      }
     }
   }
 
@@ -116,12 +168,28 @@ export default function CategoryPage() {
     )
   }
 
+  const isFashionOrStyle = ['fashion', 'style', 'lifestyle'].includes((slug || '').toLowerCase())
+
   return (
     <div className="container-custom py-8">
-      <div className="mb-8">
-        <h1 className={`text-4xl font-bold mb-4 ${lang === 'bn' ? 'font-bangla' : ''}`}>
+      <div className="mb-8 border-b pb-4 border-gray-200">
+        {isFashionOrStyle && (
+          <div className="text-xs uppercase tracking-widest text-red-700 font-semibold mb-1">
+            {lang === 'bn' ? 'এডিটোরিয়াল স্পেশাল · ফ্যাশন ও স্টাইল' : 'EDITORIAL SPECIAL · FASHION & STYLE'}
+          </div>
+        )}
+        <h1 className={`text-3xl md:text-4xl font-bold font-serif mb-2 ${lang === 'bn' ? 'font-bangla' : ''}`}>
           {categoryName}
         </h1>
+        {isFashionOrStyle && (
+          <p className="text-gray-600 text-sm max-w-2xl leading-relaxed">
+            {slug?.toLowerCase() === 'fashion'
+              ? (lang === 'bn' ? 'সমকালীন রানওয়ে, ঐতিহ্যবাহী দেশীয় তাঁতের বুনন ও উৎসবের ফ্যাশন সম্ভার।' : 'Contemporary runways, traditional South Asian weaves, and modern festive couture.')
+              : slug?.toLowerCase() === 'style'
+              ? (lang === 'bn' ? 'দৈনন্দিন স্টাইল গাইড, ওয়ারড্রোব সাজানোর কৌশল, মিনিমালিস্ট অলংকার ও গ্রুমিং।' : 'Everyday style guidelines, capsule wardrobe essentials, artisanal jewelry and grooming.')
+              : (lang === 'bn' ? 'জীবনধারা, সংস্কৃতি, সাজসজ্জা ও সমকালীন রুচির উন্মুক্ত মঞ্চ।' : 'Modern lifestyle, culture, personal aesthetics and trend analysis.')}
+          </p>
+        )}
       </div>
 
       {articles.length === 0 ? (
@@ -133,15 +201,15 @@ export default function CategoryPage() {
           {articles.map((article) => (
             <article
               key={article.id}
-              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition flex flex-col"
+              className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition flex flex-col group"
             >
-              <div className="relative h-48 bg-gray-100">
+              <div className="relative h-56 bg-gray-100 overflow-hidden">
                 {article.featured_image ? (
                   <Image
                     src={article.featured_image}
                     alt={getLocalizedTitle(article)}
                     fill
-                    className="object-contain"
+                    className="object-cover group-hover:scale-105 transition duration-500"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none'

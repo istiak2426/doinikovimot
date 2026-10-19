@@ -34,9 +34,9 @@ export default function Footer({ lang = 'bn' }) {
       follow: 'আমাদের অনুসরণ করুন',
       quickLinks: 'দ্রুত লিংক',
       contactUs: 'যোগাযোগ করুন',
-      tagline: 'সত্য ও নির্ভুল সংবাদে প্রতিশ্রুতিবদ্ধ। নির্ভেজাল সংবাদ সবার আগে।',
-      editor: 'সম্পাদক ও প্রকাশক: আরিফ মারজান',
-      copyright: 'স্বত্ব © {year} দৈনিক অভিমত',
+      tagline: 'ইন্টারনেটের তাজা মিমস, ভাইরাল ট্রেন্ডস, ফ্যাশন রোস্ট ও তরুণ সংস্কৃতির খোলামেলা মঞ্চ।',
+      editor: 'চিফ মিম লর্ড ও মিমবাজ ক্রিয়েটিভ টিম',
+      copyright: 'স্বত্ব © {year} মিমবাজ (MemeBaz) · সর্বস্বত্ব সংরক্ষিত',
     },
     en: {
       about: 'About Us',
@@ -47,17 +47,17 @@ export default function Footer({ lang = 'bn' }) {
       disclaimer: 'Disclaimer',
       editorial: 'Editorial Policy',
       subscribe: 'Subscribe',
-      subscribeHint: 'Get the latest news straight to your inbox',
+      subscribeHint: 'Get the freshest viral memes & roasts in your inbox',
       emailPlaceholder: 'Your email',
-      subscribeSuccess: 'Thank you! Your subscription is confirmed.',
+      subscribeSuccess: 'Thank you! You are now subscribed to MemeBaz.',
       subscribeError: 'Please enter a valid email address.',
       subscribeLoading: 'Sending…',
       follow: 'Follow Us',
       quickLinks: 'Quick Links',
       contactUs: 'Contact Us',
-      tagline: 'Committed to truth and accurate news. Unbiased news for everyone.',
-      editor: 'Editor & Publisher: Arif Marjan',
-      copyright: 'Copyright © {year} Doinik Obhimot',
+      tagline: 'Fresh internet memes, viral fashion roasts, witty satire & unfiltered youth culture.',
+      editor: 'Editor & Chief Memer: MemeBaz Editorial Guild',
+      copyright: 'Copyright © {year} MemeBaz',
     },
   }
 
@@ -160,7 +160,7 @@ export default function Footer({ lang = 'bn' }) {
             {/* ---------- About ---------- */}
             <div>
               <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4">
-                {isBangla ? 'দৈনিক অভিমত' : 'Doinik Obhimot'}
+                {isBangla ? 'মিমবাজ' : 'MemeBaz'}
               </h3>
               <p className="text-gray-400 text-sm leading-relaxed">{t.tagline}</p>
 

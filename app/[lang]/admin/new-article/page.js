@@ -149,7 +149,7 @@ export default function NewArticle({ params: { lang } }) {
   const contentRef = useRef(null)
   const contentBnRef = useRef(null)
 
-  const categories = ['Politics', 'Technology', 'Business', 'Sports', 'Entertainment', 'Health', 'International','Satire']
+  const categories = ['Fashion', 'Style', 'Lifestyle', 'Entertainment', 'Politics', 'Business', 'Sports', 'Technology', 'Health', 'International', 'Satire']
 
   // Insert media at cursor position
   const insertAtCursor = (field, html) => {

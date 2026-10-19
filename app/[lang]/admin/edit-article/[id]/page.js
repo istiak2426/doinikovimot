@@ -272,11 +272,15 @@ export default function EditArticle({ params: { lang } }) {
             required
           >
             <option value="">Select category</option>
+            <option value="Fashion">Fashion</option>
+            <option value="Style">Style</option>
+            <option value="Lifestyle">Lifestyle</option>
+            <option value="Entertainment">Entertainment</option>
             <option value="Politics">Politics</option>
             <option value="Business">Business</option>
             <option value="Sports">Sports</option>
-            <option value="Entertainment">Entertainment</option>
             <option value="International">International</option>
+            <option value="Technology">Technology</option>
           </select>
         </div>
         

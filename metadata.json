@@ -1,0 +1,9 @@
+{
+  "name": "Doinik Obhimot",
+  "description": "Bangla news, editorial, fashion and style publication portal with multi-language support.",
+  "prompt": "Bangla news, fashion and style publication portal with categories, articles, editorial policy and admin dashboard",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

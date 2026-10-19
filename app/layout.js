@@ -6,8 +6,8 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
   metadataBase: new URL('https://doinikobhimot.vercel.app'),
-  title: 'Doinik Obhimot - Your Trusted News Source',
-  description: 'Latest news, breaking stories, and in-depth analysis',
+  title: 'মিমবাজ (MemeBaz) - ভাইরাল মিমস, ট্রেন্ডস, ফ্যাশন ও স্যাটায়ার',
+  description: 'ইন্টারনেটের তাজা ভাইরাল মিমস, সমকালীন ফ্যাশন রোস্ট, ট্রোল ও স্যাটায়ারের প্ল্যাটফর্ম — মিমবাজ (MemeBaz)',
   robots: {
     index: true,
     follow: true,

@@ -15,7 +15,7 @@ export async function POST(request) {
     return NextResponse.json({
       success: true,
       message: 'Upload endpoint ready. Use client-side upload with Supabase Storage.',
-      url: URL.createObjectURL(file)
+      url: `/uploads/${file.name || 'image.jpg'}`
     })
   } catch (error) {
     console.error('Upload error:', error)
