@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter, usePathname } from 'next/navigation'
 import {
@@ -12,58 +12,38 @@ import {
   Newspaper,
   LogOut,
   LogIn,
-  ChevronDown,
 } from 'lucide-react'
 import LanguageSwitcher from './LanguageSwitcher'
 import { supabase } from '@/lib/supabase'
 
 const FALLBACK_CATEGORIES = [
-  { slug: 'satire', name_bn: 'স্যাটায়ার', name_en: 'Satire' },
-  { slug: 'meme', name_bn: 'মিম ও রোস্ট', name_en: 'Memes & Roasts' },
-  { slug: 'politics', name_bn: 'নেতার কাণ্ড', name_en: 'Neta Antics' },
-  { slug: 'style', name_bn: 'নেতা ফ্যাশন', name_en: 'Neta Style' },
-  { slug: 'lifestyle', name_bn: 'টং কূটনীতি', name_en: 'Tea Stall Talk' },
-  { slug: 'entertainment', name_bn: 'বিনোদন', name_en: 'Entertainment' },
-  { slug: 'national', name_bn: 'জাতীয়', name_en: 'National' },
-  { slug: 'sports', name_bn: 'খেলা', name_en: 'Sports' },
+  { slug: 'opinion', name_bn: 'সম্পাদকীয় ও অভিমত', name_en: 'Editorial & Opinion' },
+  { slug: 'smart-fashion', name_bn: 'স্মার্ট ফ্যাশন', name_en: 'Smart Fashion' },
+  { slug: 'wearables', name_bn: 'ওয়্যারেবলস', name_en: 'Wearables' },
+  { slug: 'techwear', name_bn: 'আরবান টেকওয়্যার', name_en: 'Urban Techwear' },
+  { slug: 'digital-couture', name_bn: 'ডিজিটাল ক্যুট্যুর', name_en: 'Digital Couture' },
+  { slug: 'style-satire', name_bn: 'রসবোধ ও স্যাটায়ার', name_en: 'Culture Satire' },
 ]
-
-const VISIBLE_COUNT = 6
 
 export default function Header({ propLang }) {
   const params = useParams()
   const router = useRouter()
   const pathname = usePathname()
   const lang = propLang || params?.lang || 'bn'
+  const isBn = lang === 'bn'
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [scrolled, setScrolled] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [categories, setCategories] = useState(FALLBACK_CATEGORIES)
-  const [moreOpen, setMoreOpen] = useState(false)
-  const moreRef = useRef(null)
-
-  const visibleCategories = categories.slice(0, VISIBLE_COUNT)
-  const moreCategories = categories.slice(VISIBLE_COUNT)
+  const [categories] = useState(FALLBACK_CATEGORIES)
 
   useEffect(() => {
     checkUser()
-    fetchCategories()
 
     const handleScroll = () => setScrolled(window.scrollY > 10)
-    window.addEventListener('scroll', handleScroll)
-
-    if (isMenuOpen) document.body.style.overflow = 'hidden'
-    else document.body.style.overflow = 'unset'
-
-    const handleClickOutside = (e) => {
-      if (moreRef.current && !moreRef.current.contains(e.target)) {
-        setMoreOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
+    window.addEventListener('scroll', handleScroll, { passive: true })
 
     const {
       data: { subscription },
@@ -75,10 +55,8 @@ export default function Header({ propLang }) {
     return () => {
       subscription?.unsubscribe()
       window.removeEventListener('scroll', handleScroll)
-      document.removeEventListener('mousedown', handleClickOutside)
-      document.body.style.overflow = 'unset'
     }
-  }, [isMenuOpen])
+  }, [])
 
   async function checkUser() {
     try {
@@ -86,57 +64,24 @@ export default function Header({ propLang }) {
         data: { user },
       } = await supabase.auth.getUser()
       setUser(user)
-    } catch (error) {
-      console.error('Error checking user:', error)
+    } catch {
       setUser(null)
     } finally {
       setLoading(false)
     }
   }
 
-  async function fetchCategories() {
-    try {
-      const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      if (!url || !key) return
-
-      const res = await fetch(
-        `${url}/rest/v1/categories?select=slug,name_bn,name_en&order=name_en.asc`,
-        {
-          headers: { apikey: key, Authorization: `Bearer ${key}` },
-        }
-      )
-      if (!res.ok) return
-      const data = await res.json()
-      if (Array.isArray(data) && data.length > 0) {
-        const priorityCategories = [
-          { slug: 'fashion', name_bn: 'ফ্যাশন', name_en: 'Fashion' },
-          { slug: 'style', name_bn: 'স্টাইল ও সৌন্দর্য', name_en: 'Style & Beauty' },
-          { slug: 'lifestyle', name_bn: 'লাইফস্টাইল', name_en: 'Lifestyle' },
-        ]
-        const existingSlugs = new Set(priorityCategories.map((c) => c.slug))
-        const otherCategories = data.filter((c) => !existingSlugs.has(c.slug?.toLowerCase()))
-        setCategories([...priorityCategories, ...otherCategories])
-      }
-    } catch (err) {
-      console.warn('categories fetch crashed:', err.message)
-    }
-  }
-
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    setIsMenuOpen(false)
-    router.push(`/${lang}`)
+    setUser(null)
     router.refresh()
   }
 
   const handleSearch = (e) => {
     e.preventDefault()
-    if (searchQuery.trim()) {
-      router.push(`/${lang}/search?q=${encodeURIComponent(searchQuery)}`)
-      setIsMenuOpen(false)
-      setSearchQuery('')
-    }
+    if (!searchQuery.trim()) return
+    router.push(`/${lang}/search?q=${encodeURIComponent(searchQuery.trim())}`)
+    setIsMenuOpen(false)
   }
 
   const closeMenu = () => setIsMenuOpen(false)
@@ -145,277 +90,192 @@ export default function Header({ propLang }) {
   return (
     <>
       <header
-        className={`bg-white sticky top-0 z-50 transition-all duration-300 border-b ${
-          scrolled ? 'shadow-md border-transparent' : 'border-gray-200'
+        className={`bg-[#FAF8F5]/95 backdrop-blur-md sticky top-0 z-50 transition-all duration-300 border-b ${
+          scrolled ? 'shadow-xs border-stone-300/80' : 'border-stone-200/80'
         }`}
       >
-        <div className="container-custom">
-          {/* 3-column grid: logo | nav (center) | icons */}
-          <div className="grid grid-cols-[auto_1fr_auto] items-center py-3 md:py-4 gap-4">
-            {/* === Left: Ore Neta Re Logo === */}
+        <div className="container-custom max-w-screen-xl">
+          <div className="grid grid-cols-[auto_1fr_auto] items-center py-3.5 gap-6">
+            
+            {/* === Left: Brand Identity === */}
             <Link
               href={`/${lang}`}
               className="group flex flex-col justify-self-start transition"
-              style={{ lineHeight: '1.2' }}
             >
               <div className="flex items-center gap-2">
-                <span className="bg-red-600 text-white font-black text-xl md:text-2xl px-2.5 py-0.5 rounded tracking-tight shadow-sm font-bangla">
-                  {lang === 'bn' ? 'ওরে নেতা রে' : 'ORE NETA RE'}
+                <span className="text-xl md:text-2xl font-serif font-black tracking-tight text-stone-900 group-hover:text-teal-900 transition">
+                  {isBn ? 'দৈনিক অভিমত' : 'Doinik Obhimot'}
                 </span>
-                <span className="text-[10px] font-mono font-bold bg-red-100 text-red-800 border border-red-300 px-1.5 py-0.5 rounded uppercase tracking-wider">
-                  SATIRE · MEME
+                <span className="text-[10px] font-mono font-bold bg-teal-50 text-teal-800 border border-teal-200/70 px-2 py-0.5 rounded uppercase tracking-wider">
+                  {isBn ? 'সম্পাদকীয় ও স্টাইল' : 'EDITORIAL & STYLE'}
                 </span>
               </div>
-              <span className="text-[10px] md:text-xs text-stone-500 font-medium tracking-tight mt-0.5">
-                {lang === 'bn' ? 'ভাইরাল মিমস, রাজনৈতিক স্যাটায়ার ও ট্রেন্ডস' : 'Viral Memes, Political Satire & Pop-Culture'}
+              <span className="text-[10px] md:text-xs text-stone-500 font-medium tracking-tight mt-0.5 font-serif">
+                {isBn
+                  ? 'দৈনিক অভিমত: ফ্যাশন, আধুনিক প্রযুক্তি ও সমকালীন লাইফস্টাইল'
+                  : 'Daily Perspectives on Fashion, Innovation & Modern Lifestyle'}
               </span>
             </Link>
 
-            {/* === Center: Navigation (centered) === */}
+            {/* === Center: Clean Editorial Navigation === */}
             <nav className="hidden lg:flex items-center justify-center gap-1">
               <Link
                 href={`/${lang}`}
-                className={`px-3 py-2 rounded-md text-sm transition ${
+                className={`px-3 py-1.5 rounded-lg text-sm transition ${
                   isActive(`/${lang}`)
-                    ? 'text-red-600 font-semibold bg-red-50'
-                    : 'text-gray-700 hover:text-red-600 hover:bg-gray-50'
-                } ${lang === 'bn' ? 'font-bangla' : ''}`}
+                    ? 'text-teal-900 font-semibold bg-teal-50/90'
+                    : 'text-stone-700 hover:text-teal-800 hover:bg-stone-100/70'
+                } ${isBn ? 'font-bangla' : ''}`}
               >
-                {lang === 'bn' ? 'হোম' : 'Home'}
+                {isBn ? 'হোম' : 'Home'}
               </Link>
 
-              {visibleCategories.map((cat) => {
+              {categories.map((cat) => {
                 const href = `/${lang}/category/${cat.slug}`
                 return (
                   <Link
                     key={cat.slug}
                     href={href}
-                    className={`px-3 py-2 rounded-md text-sm transition whitespace-nowrap ${
+                    className={`px-3 py-1.5 rounded-lg text-sm transition whitespace-nowrap ${
                       isActive(href)
-                        ? 'text-red-600 font-semibold bg-red-50'
-                        : 'text-gray-700 hover:text-red-600 hover:bg-gray-50'
-                    } ${lang === 'bn' ? 'font-bangla' : ''}`}
+                        ? 'text-teal-900 font-semibold bg-teal-50/90'
+                        : 'text-stone-700 hover:text-teal-800 hover:bg-stone-100/70'
+                    } ${isBn ? 'font-bangla' : ''}`}
                   >
-                    {lang === 'bn' ? cat.name_bn : cat.name_en}
+                    {isBn ? cat.name_bn : cat.name_en}
                   </Link>
                 )
               })}
-
-              {moreCategories.length > 0 && (
-                <div className="relative" ref={moreRef}>
-                  <button
-                    onClick={() => setMoreOpen((v) => !v)}
-                    className={`px-3 py-2 rounded-md text-sm transition flex items-center gap-1 whitespace-nowrap ${
-                      moreOpen
-                        ? 'text-red-600 bg-red-50'
-                        : 'text-gray-700 hover:text-red-600 hover:bg-gray-50'
-                    } ${lang === 'bn' ? 'font-bangla' : ''}`}
-                  >
-                    {lang === 'bn' ? 'আরও' : 'More'}
-                    <ChevronDown
-                      size={14}
-                      className={`transition-transform ${
-                        moreOpen ? 'rotate-180' : ''
-                      }`}
-                    />
-                  </button>
-
-                  {moreOpen && (
-                    <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
-                      {moreCategories.map((cat) => {
-                        const href = `/${lang}/category/${cat.slug}`
-                        return (
-                          <Link
-                            key={cat.slug}
-                            href={href}
-                            onClick={() => setMoreOpen(false)}
-                            className={`block px-4 py-2 text-sm transition ${
-                              isActive(href)
-                                ? 'text-red-600 bg-red-50 font-semibold'
-                                : 'text-gray-700 hover:bg-gray-50 hover:text-red-600'
-                            } ${lang === 'bn' ? 'font-bangla' : ''}`}
-                          >
-                            {lang === 'bn' ? cat.name_bn : cat.name_en}
-                          </Link>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
             </nav>
 
-            {/* === Right: Icons / User === */}
-            <div className="hidden lg:flex items-center gap-1 justify-self-end">
-              <button className="p-2 hover:bg-gray-100 rounded-full transition">
+            {/* === Right: Search, Language Switcher & Auth === */}
+            <div className="hidden lg:flex items-center gap-2 justify-self-end">
+              <Link
+                href={`/${lang}/search`}
+                className="p-2 hover:bg-stone-100 rounded-lg text-stone-600 hover:text-teal-900 transition"
+                title={isBn ? 'অনুসন্ধান' : 'Search'}
+                aria-label="Search"
+              >
                 <Search size={18} />
-              </button>
+              </Link>
+
               <LanguageSwitcher currentLang={lang} />
 
               {!loading &&
                 (user ? (
                   <div className="relative group">
-                    <button className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-full transition">
-                      <User size={18} />
-                      <span className="text-sm hidden xl:inline">
-                        {user.email?.split('@')[0]}
-                      </span>
+                    <button className="flex items-center gap-2 px-2.5 py-1.5 hover:bg-stone-100 rounded-lg transition text-stone-700 text-sm border border-stone-200">
+                      <User size={16} />
+                      <span className="truncate max-w-[100px]">{user.email?.split('@')[0]}</span>
                     </button>
 
-                    <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                      <div className="py-1">
-                        <Link
-                          href={`/${lang}/admin`}
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        >
-                          📊 {lang === 'bn' ? 'ড্যাশবোর্ড' : 'Dashboard'}
-                        </Link>
-                        <Link
-                          href={`/${lang}/admin/new-article`}
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        >
-                          ✍️ {lang === 'bn' ? 'নতুন আর্টিকেল' : 'New Article'}
-                        </Link>
-                        <Link
-                          href={`/${lang}/admin/categories`}
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        >
-                          🗂️ {lang === 'bn' ? 'ক্যাটাগরি' : 'Categories'}
-                        </Link>
-                        <hr className="my-1" />
-                        <button
-                          onClick={handleLogout}
-                          className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
-                        >
-                          🚪 {lang === 'bn' ? 'লগআউট' : 'Logout'}
-                        </button>
-                      </div>
+                    <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-stone-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 py-1">
+                      <Link
+                        href={`/${lang}/admin`}
+                        className="flex items-center gap-2 px-4 py-2 text-xs text-stone-700 hover:bg-stone-50"
+                      >
+                        📊 {isBn ? 'ড্যাশবোর্ড' : 'Dashboard'}
+                      </Link>
+                      <Link
+                        href={`/${lang}/admin/new-article`}
+                        className="flex items-center gap-2 px-4 py-2 text-xs text-stone-700 hover:bg-stone-50"
+                      >
+                        ✍️ {isBn ? 'নতুন আর্টিকেল' : 'New Article'}
+                      </Link>
+                      <hr className="my-1 border-stone-100" />
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 w-full text-left px-4 py-2 text-xs text-rose-700 hover:bg-rose-50"
+                      >
+                        🚪 {isBn ? 'লগআউট' : 'Logout'}
+                      </button>
                     </div>
                   </div>
                 ) : (
                   <Link
                     href={`/${lang}/auth`}
-                    className="bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition text-sm"
+                    className="bg-stone-900 text-stone-100 hover:bg-teal-900 px-3.5 py-1.5 rounded-lg transition text-xs font-medium"
                   >
-                    {lang === 'bn' ? 'সাইন ইন' : 'Sign In'}
+                    {isBn ? 'সাইন ইন' : 'Sign In'}
                   </Link>
                 ))}
             </div>
 
-            {/* === Mobile menu button === */}
-            <div className="flex lg:hidden items-center gap-1 justify-self-end col-start-3">
-              <button className="p-2 hover:bg-gray-100 rounded-lg">
-                <Search size={20} />
-              </button>
+            {/* === Mobile Menu Button === */}
+            <div className="flex lg:hidden items-center gap-2 justify-self-end">
+              <Link
+                href={`/${lang}/search`}
+                className="p-2 hover:bg-stone-100 rounded-lg text-stone-700"
+                aria-label="Search"
+              >
+                <Search size={18} />
+              </Link>
+              <LanguageSwitcher currentLang={lang} />
               <button
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="p-2 hover:bg-stone-100 rounded-lg text-stone-700"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 aria-label="Menu"
               >
-                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                {isMenuOpen ? <X size={22} /> : <Menu size={22} />}
               </button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Mobile slide-in menu */}
+      {/* Clean Mobile Drawer */}
       <div
-        className={`fixed inset-0 z-40 lg:hidden transition-transform duration-300 ease-in-out ${
-          isMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed inset-0 z-50 lg:hidden transition-all duration-300 ${
+          isMenuOpen ? 'visible' : 'invisible pointer-events-none'
         }`}
       >
         <div
-          className={`absolute inset-0 bg-black transition-opacity duration-300 ${
-            isMenuOpen ? 'opacity-50' : 'opacity-0 pointer-events-none'
+          className={`absolute inset-0 bg-stone-900/40 backdrop-blur-xs transition-opacity duration-300 ${
+            isMenuOpen ? 'opacity-100' : 'opacity-0'
           }`}
           onClick={closeMenu}
         />
 
-        <div className="relative w-4/5 max-w-sm h-full bg-white shadow-xl overflow-y-auto pb-32 ml-auto">
-          <div className="p-4 border-b bg-gray-50 sticky top-0 z-10">
-            <form onSubmit={handleSearch} className="relative">
+        <div
+          className={`relative w-4/5 max-w-sm h-full bg-[#FAF8F5] shadow-2xl overflow-y-auto pb-24 ml-auto transition-transform duration-300 ${
+            isMenuOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
+        >
+          <div className="p-4 border-b border-stone-200 flex items-center justify-between">
+            <span className="font-serif font-black text-stone-900 text-lg">
+              {isBn ? 'দৈনিক অভিমত' : 'Doinik Obhimot'}
+            </span>
+            <button onClick={closeMenu} className="p-1.5 text-stone-500 hover:text-stone-900" aria-label="Close menu">
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Mobile Search Input */}
+          <form onSubmit={handleSearch} className="p-3 border-b border-stone-200/80 bg-white">
+            <div className="relative">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={lang === 'bn' ? 'খুঁজুন...' : 'Search...'}
-                className="w-full pl-10 pr-20 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                placeholder={isBn ? 'সম্পাদকীয় অনুসন্ধান করুন…' : 'Search editorials…'}
+                className="w-full pl-8 pr-3 py-2 text-xs bg-stone-50 border border-stone-300 rounded-lg outline-none focus:border-teal-800 focus:bg-white"
               />
-              <Search
-                className="absolute left-3 top-2.5 text-gray-400"
-                size={18}
-              />
-              <button
-                type="submit"
-                className="absolute right-2 top-1.5 px-3 py-1 bg-red-600 text-white rounded-md text-sm hover:bg-red-700"
-              >
-                {lang === 'bn' ? 'খুঁজুন' : 'Go'}
-              </button>
-            </form>
-          </div>
-
-          <div className="p-4 border-b bg-gradient-to-r from-red-50 to-orange-50">
-            {!loading && user ? (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <User className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold truncate">
-                      {user.email?.split('@')[0]}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">
-                      {user.email}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="text-red-600 hover:bg-red-100 p-2 rounded-lg flex-shrink-0"
-                >
-                  <LogOut size={20} />
-                </button>
-              </div>
-            ) : (
-              <div>
-                <p className="text-sm text-gray-600 mb-2">
-                  {lang === 'bn'
-                    ? 'মিমস ও এক্সপ্লেইনার পড়তে লগইন করুন'
-                    : 'Login to read memes & stories'}
-                </p>
-                <Link
-                  href={`/${lang}/auth`}
-                  className="flex items-center justify-center gap-2 w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
-                  onClick={closeMenu}
-                >
-                  <LogIn size={18} />
-                  {lang === 'bn' ? 'সাইন ইন করুন' : 'Sign In'}
-                </Link>
-              </div>
-            )}
-          </div>
-
-          <div className="p-4 border-b">
-            <p className="text-xs text-gray-500 uppercase mb-2 tracking-wider">
-              {lang === 'bn' ? 'ভাষা' : 'Language'}
-            </p>
-            <LanguageSwitcher currentLang={lang} />
-          </div>
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400" />
+            </div>
+          </form>
 
           <nav className="p-4 space-y-1">
             <Link
               href={`/${lang}`}
               onClick={closeMenu}
-              className={`flex items-center gap-3 px-3 py-3 rounded-lg transition ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition ${
                 isActive(`/${lang}`)
-                  ? 'bg-red-50 text-red-600 font-semibold'
-                  : 'hover:bg-gray-100'
-              } ${lang === 'bn' ? 'font-bangla' : ''}`}
+                  ? 'bg-teal-50 text-teal-900 font-semibold'
+                  : 'text-stone-700 hover:bg-stone-100'
+              } ${isBn ? 'font-bangla' : ''}`}
             >
-              <Home size={20} className="flex-shrink-0" />
-              <span>{lang === 'bn' ? 'হোম' : 'Home'}</span>
+              <Home size={18} />
+              <span>{isBn ? 'হোম' : 'Home'}</span>
             </Link>
 
             {categories.map((cat) => {
@@ -425,47 +285,42 @@ export default function Header({ propLang }) {
                   key={cat.slug}
                   href={href}
                   onClick={closeMenu}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-lg transition ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition ${
                     isActive(href)
-                      ? 'bg-red-50 text-red-600 font-semibold'
-                      : 'hover:bg-gray-100'
-                  } ${lang === 'bn' ? 'font-bangla' : ''}`}
+                      ? 'bg-teal-50 text-teal-900 font-semibold'
+                      : 'text-stone-700 hover:bg-stone-100'
+                  } ${isBn ? 'font-bangla' : ''}`}
                 >
-                  <Newspaper size={20} className="flex-shrink-0" />
-                  <span>{lang === 'bn' ? cat.name_bn : cat.name_en}</span>
+                  <Newspaper size={18} />
+                  <span>{isBn ? cat.name_bn : cat.name_en}</span>
                 </Link>
               )
             })}
           </nav>
 
-          {user && (
-            <div className="p-4 border-t mb-4">
-              <p className="text-xs text-gray-500 uppercase mb-2 tracking-wider">
-                {lang === 'bn' ? 'প্রশাসনিক এলাকা' : 'Admin Area'}
-              </p>
+          <div className="p-4 border-t border-stone-200 mt-4">
+            {!loading && user ? (
+              <div className="space-y-2">
+                <p className="text-xs text-stone-500 truncate">{user.email}</p>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center gap-2 bg-stone-200 text-stone-800 py-2 rounded-lg text-xs font-medium"
+                >
+                  <LogOut size={14} />
+                  <span>{isBn ? 'লগআউট' : 'Logout'}</span>
+                </button>
+              </div>
+            ) : (
               <Link
-                href={`/${lang}/admin`}
+                href={`/${lang}/auth`}
                 onClick={closeMenu}
-                className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-gray-100"
+                className="w-full flex items-center justify-center gap-2 bg-stone-900 text-white py-2.5 rounded-lg text-sm font-medium"
               >
-                📊 <span>{lang === 'bn' ? 'ড্যাশবোর্ড' : 'Dashboard'}</span>
+                <LogIn size={16} />
+                <span>{isBn ? 'সাইন ইন করুন' : 'Sign In'}</span>
               </Link>
-              <Link
-                href={`/${lang}/admin/new-article`}
-                onClick={closeMenu}
-                className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-gray-100"
-              >
-                ✍️ <span>{lang === 'bn' ? 'নতুন আর্টিকেল' : 'New Article'}</span>
-              </Link>
-              <Link
-                href={`/${lang}/admin/categories`}
-                onClick={closeMenu}
-                className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-gray-100"
-              >
-                🗂️ <span>{lang === 'bn' ? 'ক্যাটাগরি ম্যানেজ' : 'Categories'}</span>
-              </Link>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </>

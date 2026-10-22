@@ -7,12 +7,12 @@ export const metadata = {
     process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
   ),
   title: {
-    default: 'ওরে নেতা রে (Ore Neta Re)',
-    template: '%s | Ore Neta Re (ওরে নেতা রে)',
+    default: 'Doinik Obhimot | দৈনিক অভিমত - ফ্যাশন, প্রযুক্তি ও সমকালীন লাইফস্টাইল',
+    template: '%s | Doinik Obhimot (দৈনিক অভিমত)',
   },
-  description: 'রাজনীতি, নেতাদের কাণ্ডকারখানা, ভাইরাল মিমস ও স্যাটায়ার — ওরে নেতা রে (Ore Neta Re)',
+  description: 'দৈনিক অভিমত: স্মার্ট ফ্যাশন, ওয়্যারেবল টেকনোলজি, আধুনিক লাইফস্টাইল ও সমকালীন সমাজ ভাবনা — Doinik Obhimot',
   openGraph: {
-    siteName: 'ওরে নেতা রে (Ore Neta Re)',
+    siteName: 'Doinik Obhimot (দৈনিক অভিমত)',
     type: 'website',
     locale: 'bn_BD',
   },
@@ -28,11 +28,9 @@ export default function LangLayout({ children, params }) {
 
   return (
     <>
-      {/* 👇 Google Analytics কম্পোনেন্টটি এখানে বসান */}
       <GoogleAnalytics /> 
-      
       <Header propLang={lang} />
-      <main className="min-h-screen bg-gray-50">{children}</main>
+      <main className="min-h-screen bg-[#FAF8F5]">{children}</main>
       <Footer lang={lang} />
     </>
   )

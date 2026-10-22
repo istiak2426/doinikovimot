@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'দাবিত্যাগ - আঁতেল (Aatel)',
+  title: 'দাবিত্যাগ - দৈনিক অভিমত (Doinik Obhimot)',
   description: 'আমাদের দাবিত্যাগ সম্পর্কে জানুন',
 }
 

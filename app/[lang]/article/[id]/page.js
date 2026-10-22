@@ -135,18 +135,18 @@ export async function generateMetadata({ params }) {
   }
 
   return {
-    title: `${title} | Ore Neta Re (ওরে নেতা রে)`,
+    title: `${title} | Byte & Boujee (বাইটস অ্যান্ড বুজি)`,
     description,
 
     openGraph: {
       title,
       description,
       url,
-      siteName: 'Ore Neta Re (ওরে নেতা রে)',
+      siteName: 'Byte & Boujee (বাইটস অ্যান্ড বুজি)',
       images: ogImages,
       type: 'article',
       publishedTime: data.published_at,
-      authors: [data.author || 'Ore Neta Re'],
+      authors: [data.author || 'Byte & Boujee Editorial'],
       locale: isBn ? 'bn_BD' : 'en_US',
     },
 

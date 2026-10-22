@@ -5,9 +5,9 @@ import GoogleTagManager from '@/components/GoogleTagManager'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  metadataBase: new URL('https://doinikobhimot.vercel.app'),
-  title: 'ওরে নেতা রে (Ore Neta Re) - ভাইরাল মিমস, স্যাটায়ার ও পলিটিক্যাল রোস্ট',
-  description: 'রাজনীতি, নেতাদের কাণ্ডকারখানা, ভাইরাল মিমস, ফ্যাশন ও ট্রেন্ডসের খোলামেলা স্যাটায়ার পোর্টাল — ওরে নেতা রে (Ore Neta Re)',
+  metadataBase: new URL('https://doinikobhimot.com'),
+  title: 'Doinik Obhimot (দৈনিক অভিমত) - ফ্যাশন, আধুনিক প্রযুক্তি ও সমকালীন লাইফস্টাইল',
+  description: 'দৈনিক অভিমত: স্মার্ট ফ্যাশন, ওয়্যারেবল টেকনোলজি, আধুনিক লাইফস্টাইল ও সমকালীন সমাজ ভাবনা — Doinik Obhimot',
   robots: {
     index: true,
     follow: true,

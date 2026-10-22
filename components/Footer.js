@@ -8,95 +8,86 @@ import {
   Instagram,
   Youtube,
   Mail,
-  Phone,
   MapPin,
   ChevronUp,
   Loader2,
   Check,
+  Sparkles,
+  Cpu,
 } from 'lucide-react'
+import { FICTITIOUS_EDITORIAL_TEAM, EDITORIAL_CONTACTS } from '@/lib/brandConfig'
 
 export default function Footer({ lang = 'bn' }) {
+  const isBangla = lang === 'bn'
+
   const content = {
     bn: {
       about: 'আমাদের সম্পর্কে',
       contact: 'যোগাযোগ',
       privacy: 'গোপনীয়তা নীতি',
       terms: 'শর্তাবলী',
-      advertise: 'বিজ্ঞাপন',
-      disclaimer: 'দাবিত্যাগ',
-      editorial: 'সম্পাদকীয় নীতি',
-      subscribe: 'সাবস্ক্রাইব',
-      subscribeHint: 'নতুন সংবাদ সরাসরি আপনার ইমেইলে',
-      emailPlaceholder: 'আপনার ইমেইল',
-      subscribeSuccess: 'ধন্যবাদ! সাবস্ক্রিপশন নিশ্চিত হয়েছে।',
-      subscribeError: 'অনুগ্রহ করে একটি বৈধ ইমেইল দিন।',
+      advertise: 'বিজ্ঞাপন ও পার্টনারশিপ',
+      disclaimer: 'ডিসক্লেইমার',
+      editorial: 'সম্পাদকীয় দর্শন',
+      subscribe: 'নিউজলেটার সাবস্ক্রাইব',
+      subscribeHint: 'ফ্যাশন, ওয়্যারেবল টেক ও আধুনিক লাইফস্টাইলের নিয়মিত আপডেট',
+      emailPlaceholder: 'আপনার ইমেইল দিন',
+      subscribeSuccess: 'ধন্যবাদ! আপনি সফলভাবে সাবস্ক্রাইব করেছেন।',
+      subscribeError: 'অনুগ্রহ করে একটি সঠিক ইমেইল ঠিকানা দিন।',
       subscribeLoading: 'পাঠানো হচ্ছে…',
-      follow: 'আমাদের অনুসরণ করুন',
-      quickLinks: 'দ্রুত লিংক',
-      contactUs: 'যোগাযোগ করুন',
-      tagline: 'রাজনীতি, নেতাদের কাণ্ডকারখানা, তাজা মিমস ও ভাইরাল ট্রেন্ডসের খোলামেলা স্যাটায়ার মঞ্চ।',
-      editor: 'চিফ নেতা অবজারভার: শাহ ইসতিয়াক শান্ত (Shah Istiak Shanto) · ওরে নেতা রে ক্রিয়েটিভ সেল',
-      copyright: 'স্বত্ব © {year} ওরে নেতা রে (Ore Neta Re) · সর্বস্বত্ব সংরক্ষিত',
+      follow: 'সামাজিক মাধ্যমে যুক্ত থাকুন',
+      quickLinks: 'প্রয়োজনীয় লিংক',
+      contactUs: 'যোগাযোগের ঠিকানা',
+      tagline: 'দৈনিক অভিমত: ফ্যাশন, আধুনিক প্রযুক্তি ও সমকালীন লাইফস্টাইল।',
+      editor: `প্রধান সম্পাদক: ${FICTITIOUS_EDITORIAL_TEAM.editorInChief.name_bn} · ডিজাইন ও টেকনোলজি ল্যাব`,
+      copyright: 'স্বত্ব © {year} দৈনিক অভিমত (Doinik Obhimot) · সর্বস্বত্ব সংরক্ষিত',
     },
     en: {
       about: 'About Us',
       contact: 'Contact',
       privacy: 'Privacy Policy',
       terms: 'Terms of Use',
-      advertise: 'Advertise',
+      advertise: 'Advertise & Partnerships',
       disclaimer: 'Disclaimer',
-      editorial: 'Editorial Policy',
-      subscribe: 'Subscribe',
-      subscribeHint: 'Get freshest political satire & memes in your inbox',
-      emailPlaceholder: 'Your email',
-      subscribeSuccess: 'Thank you! You are now subscribed to Ore Neta Re.',
+      editorial: 'Editorial Mission',
+      subscribe: 'Subscribe to Newsletter',
+      subscribeHint: 'Regular dispatches on modern fashion, tech, and cultural lifestyle',
+      emailPlaceholder: 'Enter your email',
+      subscribeSuccess: 'Thank you! You are now subscribed to Doinik Obhimot.',
       subscribeError: 'Please enter a valid email address.',
       subscribeLoading: 'Sending…',
-      follow: 'Follow Us',
+      follow: 'Connect With Us',
       quickLinks: 'Quick Links',
-      contactUs: 'Contact Us',
-      tagline: 'The ultimate destination for political satire, viral memes, leader roasts & pop-culture commentary.',
-      editor: 'Chief Neta Observer: Shah Istiak Shanto · Ore Neta Re Editorial Team',
-      copyright: 'Copyright © {year} Ore Neta Re · All rights reserved',
+      contactUs: 'Design Ateliers',
+      tagline: 'Daily perspectives on modern fashion, innovation & lifestyle.',
+      editor: `Editor-in-Chief: ${FICTITIOUS_EDITORIAL_TEAM.editorInChief.name_en} · TechCouture Innovation Lab`,
+      copyright: 'Copyright © {year} Doinik Obhimot · All rights reserved',
     },
   }
 
   const t = content[lang] || content.bn
-  const isBangla = lang === 'bn'
   const fontClass = isBangla ? 'font-bangla' : 'font-latin'
 
-  // lang-prefixed route helper
-  const p = (path) => `/${lang}${path}`
-
-  // quick links — centrally managed
   const quickLinks = [
-    { href: '/about', label: t.about },
-    { href: '/contact', label: t.contact },
-    { href: '/advertise', label: t.advertise },
-    { href: '/privacy-policy', label: t.privacy },
-    { href: '/terms', label: t.terms },
-    { href: '/disclaimer', label: t.disclaimer },
-    { href: '/editorial-policy', label: t.editorial },
+    { href: `/${lang}/about`, label: t.about },
+    { href: `/${lang}/contact`, label: t.contact },
+    { href: `/${lang}/advertise`, label: t.advertise },
+    { href: `/${lang}/privacy-policy`, label: t.privacy },
+    { href: `/${lang}/terms`, label: t.terms },
+    { href: `/${lang}/disclaimer`, label: t.disclaimer },
+    { href: `/${lang}/editorial-policy`, label: t.editorial },
   ]
 
   const socials = [
-    {
-      href: 'https://www.facebook.com/doinikobhimot',
-      label: 'Facebook',
-      Icon: Facebook,
-      hover: 'hover:text-blue-400',
-    },
-    { href: '#', label: 'Twitter', Icon: Twitter, hover: 'hover:text-sky-400' },
-    { href: '#', label: 'Instagram', Icon: Instagram, hover: 'hover:text-pink-500' },
-    { href: '#', label: 'YouTube', Icon: Youtube, hover: 'hover:text-red-500' },
+    { href: '#', label: 'Instagram', Icon: Instagram, hover: 'hover:text-pink-400' },
+    { href: '#', label: 'Twitter', Icon: Twitter, hover: 'hover:text-cyan-400' },
+    { href: '#', label: 'YouTube', Icon: Youtube, hover: 'hover:text-red-400' },
+    { href: '#', label: 'Facebook', Icon: Facebook, hover: 'hover:text-blue-400' },
   ]
 
-  // ---------- Scroll to top ----------
   const [showTop, setShowTop] = useState(false)
-
   useEffect(() => {
-    const onScroll = () => setShowTop(window.scrollY > 500)
-    onScroll()
+    const onScroll = () => setShowTop(window.scrollY > 400)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
@@ -105,215 +96,165 @@ export default function Footer({ lang = 'bn' }) {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // ---------- Newsletter ----------
   const [email, setEmail] = useState('')
-  const [status, setStatus] = useState('idle') // idle | loading | success | error
+  const [subStatus, setSubStatus] = useState('idle')
 
   const handleSubscribe = async (e) => {
     e.preventDefault()
-    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
-    if (!valid) {
-      setStatus('error')
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setSubStatus('error')
       return
     }
-
-    setStatus('loading')
-    try {
-      // 🔌 আপনার API endpoint এখানে বসান
-      // await fetch('/api/subscribe', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email: email.trim(), lang }),
-      // })
-
-      await new Promise((r) => setTimeout(r, 700)) // demo delay
-      setStatus('success')
+    setSubStatus('loading')
+    setTimeout(() => {
+      setSubStatus('success')
       setEmail('')
-    } catch {
-      setStatus('error')
-    }
+    }, 800)
   }
 
   const currentYear = new Date().getFullYear()
 
   return (
-    <>
-      {/* Scroll to top */}
-      <button
-        type="button"
-        onClick={scrollToTop}
-        aria-label={isBangla ? 'উপরে যান' : 'Scroll to top'}
-        className={`fixed bottom-4 right-4 md:bottom-8 md:right-8 z-40
-          bg-red-600 text-white p-2.5 md:p-3 rounded-full shadow-lg
-          hover:bg-red-700 active:scale-95 transition-all duration-200
-          focus:outline-none focus-visible:ring-2 focus-visible:ring-white
-          focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
-          ${showTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}
-      >
-        <ChevronUp size={20} className="md:w-6 md:h-6" aria-hidden="true" />
-      </button>
+    <footer className="bg-stone-900 text-stone-300 font-sans border-t border-stone-800">
+      {/* Main Footer Container */}
+      <div className="container-custom max-w-screen-xl py-12 lg:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10">
+          
+          {/* Col 1: Brand Info (5 cols) */}
+          <div className="lg:col-span-5 space-y-4">
+            <Link href={`/${lang}`} className="inline-flex items-center gap-2 group">
+              <span className="text-2xl font-serif font-black tracking-tight text-white group-hover:text-teal-400 transition">
+                {isBangla ? 'দৈনিক অভিমত' : 'Doinik Obhimot'}
+              </span>
+              <span className="text-[10px] font-mono font-bold bg-stone-800 text-teal-300 border border-stone-700 px-2 py-0.5 rounded tracking-wider uppercase">
+                {isBangla ? 'সম্পাদকীয় ও স্টাইল' : 'EDITORIAL & STYLE'}
+              </span>
+            </Link>
 
-      <footer lang={lang} className={`bg-gray-900 text-white mt-8 md:mt-16 ${fontClass}`}>
-        <div className="container-custom py-8 md:py-12">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10">
+            <p className={`text-stone-400 text-sm leading-relaxed max-w-md ${fontClass}`}>
+              {t.tagline}
+            </p>
 
-            {/* ---------- About ---------- */}
-            <div>
-              <div className="flex items-center gap-2 mb-3 md:mb-4">
-                <span className="bg-red-600 text-white font-black text-lg px-2.5 py-0.5 rounded tracking-tight font-bangla">
-                  {isBangla ? 'ওরে নেতা রে' : 'ORE NETA RE'}
-                </span>
-                <span className="text-[10px] font-mono bg-stone-800 text-red-400 border border-stone-700 px-1.5 py-0.5 rounded uppercase font-bold">
-                  MEME
-                </span>
-              </div>
-              <p className="text-gray-400 text-sm leading-relaxed">{t.tagline}</p>
-
-              <div className="flex space-x-1 mt-5">
-                {socials.map(({ href, label, Icon, hover }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    target={href.startsWith('http') ? '_blank' : undefined}
-                    rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                    aria-label={label}
-                    className={`p-2 rounded-lg text-gray-400 ${hover} hover:bg-white/5 transition
-                      focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70`}
-                  >
-                    <Icon size={18} aria-hidden="true" />
-                  </a>
-                ))}
-              </div>
+            <div className="pt-2 text-xs text-stone-500 space-y-1">
+              <p className="flex items-center gap-2">
+                <MapPin size={14} className="text-cyan-500 shrink-0" />
+                <span>{isBangla ? EDITORIAL_CONTACTS.address_bn : EDITORIAL_CONTACTS.address_en}</span>
+              </p>
+              <p className="flex items-center gap-2">
+                <Mail size={14} className="text-cyan-500 shrink-0" />
+                <a href={`mailto:${EDITORIAL_CONTACTS.email}`} className="hover:text-cyan-400 transition">
+                  {EDITORIAL_CONTACTS.email}
+                </a>
+              </p>
             </div>
 
-            {/* ---------- Quick Links ---------- */}
-            <div>
-              <h4 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">
-                {t.quickLinks}
-              </h4>
-              <ul className="space-y-1 text-gray-400 text-sm">
-                {quickLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={p(link.href)}
-                      className="inline-block py-1 hover:text-white transition rounded
-                        focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* ---------- Contact ---------- */}
-            <div>
-              <h4 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">
-                {t.contactUs}
-              </h4>
-              <ul className="space-y-3 text-gray-400 text-sm">
-                <li className="flex items-center gap-2">
-                  <Phone size={14} className="shrink-0" aria-hidden="true" />
+            <div className="pt-3 flex items-center gap-3">
+              {socials.map((s) => {
+                const Icon = s.Icon
+                return (
                   <a
-                    href="tel:+8801748008483"
-                    className="hover:text-white transition rounded
-                      focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                    key={s.label}
+                    href={s.href}
+                    aria-label={s.label}
+                    className={`w-9 h-9 rounded-full bg-stone-800 text-stone-300 flex items-center justify-center transition border border-stone-700/60 ${s.hover}`}
                   >
-                    +880 1748 008 483
+                    <Icon size={16} />
                   </a>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Mail size={14} className="shrink-0" aria-hidden="true" />
-                  <a
-                    href="mailto:orenetare@gmail.com"
-                    className="hover:text-white transition break-all rounded
-                      focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
-                  >
-                    orenetare@gmail.com
-                  </a>
-                </li>
-                <li className="flex items-center gap-2">
-                  <MapPin size={14} className="shrink-0" aria-hidden="true" />
-                  <span>{isBangla ? 'ঢাকা, বাংলাদেশ' : 'Dhaka, Bangladesh'}</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* ---------- Newsletter ---------- */}
-            <div>
-              <h4 className="font-semibold mb-2 text-sm md:text-base">{t.subscribe}</h4>
-              <p className="text-gray-400 text-xs mb-3">{t.subscribeHint}</p>
-
-              <form onSubmit={handleSubscribe} noValidate>
-                <label htmlFor="footer-email" className="sr-only">
-                  {t.emailPlaceholder}
-                </label>
-
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <input
-                    id="footer-email"
-                    type="email"
-                    inputMode="email"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value)
-                      if (status !== 'idle') setStatus('idle')
-                    }}
-                    placeholder={t.emailPlaceholder}
-                    aria-invalid={status === 'error'}
-                    aria-describedby="footer-email-msg"
-                    className={`flex-1 min-w-0 px-3 py-2 rounded-lg text-gray-900 text-sm
-                      placeholder:text-gray-500 border
-                      focus:outline-none focus:ring-2 focus:ring-red-500/60
-                      ${status === 'error' ? 'border-red-500' : 'border-transparent'}`}
-                  />
-                  <button
-                    type="submit"
-                    disabled={status === 'loading'}
-                    className="inline-flex items-center justify-center gap-1.5
-                      bg-red-600 px-4 py-2 rounded-lg hover:bg-red-700
-                      active:scale-[.98] transition text-sm whitespace-nowrap
-                      disabled:opacity-60 disabled:cursor-not-allowed
-                      focus:outline-none focus-visible:ring-2 focus-visible:ring-white
-                      focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
-                  >
-                    {status === 'loading' && (
-                      <Loader2 size={14} className="animate-spin" aria-hidden="true" />
-                    )}
-                    {status === 'loading' ? t.subscribeLoading : t.subscribe}
-                  </button>
-                </div>
-
-                {/* Live status message */}
-                <p
-                  id="footer-email-msg"
-                  role="status"
-                  aria-live="polite"
-                  className={`mt-2 text-xs min-h-[1rem] flex items-center gap-1
-                    ${status === 'success' ? 'text-green-400' : ''}
-                    ${status === 'error' ? 'text-red-400' : ''}
-                    ${status === 'loading' ? 'text-gray-400' : ''}`}
-                >
-                  {status === 'success' && (
-                    <>
-                      <Check size={12} aria-hidden="true" /> {t.subscribeSuccess}
-                    </>
-                  )}
-                  {status === 'error' && t.subscribeError}
-                  {status === 'loading' && t.subscribeLoading}
-                </p>
-              </form>
+                )
+              })}
             </div>
           </div>
 
-          {/* ---------- Bottom bar ---------- */}
-          <div className="border-t border-gray-800 mt-8 pt-6 text-center text-gray-400 text-xs md:text-sm space-y-1">
-            <p>{t.editor}</p>
-            <p>{t.copyright.replace('{year}', currentYear)}</p>
+          {/* Col 2: Navigation Links (3 cols) */}
+          <div className="lg:col-span-3 space-y-3">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-white flex items-center gap-2">
+              <Cpu size={14} className="text-cyan-400" />
+              <span>{t.quickLinks}</span>
+            </h3>
+            <ul className="space-y-2 text-sm text-stone-400">
+              {quickLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="hover:text-cyan-300 transition duration-150 inline-block"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Col 3: Newsletter (4 cols) */}
+          <div className="lg:col-span-4 space-y-4">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-white flex items-center gap-2">
+              <Sparkles size={14} className="text-cyan-400" />
+              <span>{t.subscribe}</span>
+            </h3>
+            <p className={`text-xs text-stone-400 ${fontClass}`}>
+              {t.subscribeHint}
+            </p>
+
+            <form onSubmit={handleSubscribe} className="space-y-2">
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    if (subStatus !== 'idle') setSubStatus('idle')
+                  }}
+                  placeholder={t.emailPlaceholder}
+                  className="bg-stone-800 text-stone-100 placeholder-stone-500 text-sm px-3.5 py-2.5 rounded-lg border border-stone-700 focus:outline-none focus:border-cyan-500 flex-1 transition"
+                />
+                <button
+                  type="submit"
+                  disabled={subStatus === 'loading'}
+                  className="bg-cyan-600 hover:bg-cyan-500 text-white font-medium px-4 py-2.5 rounded-lg text-sm transition shrink-0 flex items-center justify-center min-w-[70px]"
+                >
+                  {subStatus === 'loading' ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : subStatus === 'success' ? (
+                    <Check size={16} />
+                  ) : (
+                    <span>{isBangla ? 'যুক্ত হোন' : 'Join'}</span>
+                  )}
+                </button>
+              </div>
+
+              {subStatus === 'success' && (
+                <p className="text-xs text-emerald-400 flex items-center gap-1.5 pt-1">
+                  <Check size={12} /> {t.subscribeSuccess}
+                </p>
+              )}
+              {subStatus === 'error' && (
+                <p className="text-xs text-rose-400 pt-1">
+                  {t.subscribeError}
+                </p>
+              )}
+            </form>
           </div>
         </div>
-      </footer>
-    </>
+
+        {/* Bottom Bar */}
+        <div className="mt-12 pt-6 border-t border-stone-800 text-xs text-stone-500 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p>{t.copyright.replace('{year}', currentYear)}</p>
+          <p className="text-stone-400 font-medium">
+            {t.editor}
+          </p>
+        </div>
+      </div>
+
+      {/* Floating Scroll to top */}
+      {showTop && (
+        <button
+          onClick={scrollToTop}
+          aria-label="Scroll to top"
+          className="fixed bottom-6 right-6 w-11 h-11 bg-stone-800/90 text-cyan-400 rounded-full flex items-center justify-center border border-stone-700 shadow-lg hover:bg-cyan-600 hover:text-white transition duration-200 z-40 backdrop-blur"
+        >
+          <ChevronUp size={20} />
+        </button>
+      )}
+    </footer>
   )
 }
